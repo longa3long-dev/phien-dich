@@ -163,8 +163,9 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       <div id="log"></div>
       <div class="empty" id="empty">
         <ol>
-          <li><b>Nhân viên:</b> bấm nút vàng → bàn phím hiện lên → bấm <b>🎤 trên bàn phím</b> rồi nói tiếng Việt. Ngừng nói khoảng 2 giây là máy tự dịch và đọc to cho khách.</li>
-          <li><b>Khách Nga</b> bấm nút xanh dương, <b>khách nói tiếng Anh</b> bấm nút xanh lá, rồi bấm 🎤 trên bàn phím và nói. Máy dịch ra tiếng Việt và đọc to.</li>
+          <li><b>Nhân viên:</b> bấm nút vàng rồi nói tiếng Việt. Ngừng nói là máy tự dịch và đọc to cho khách.</li>
+          <li><b>Khách Nga</b> bấm nút xanh dương, <b>khách nói tiếng Anh</b> bấm nút xanh lá rồi nói. Máy dịch ra tiếng Việt và đọc to.</li>
+          <li>Máy nào bấm mic không nghe được: app tự chuyển sang <b>🎤 trên bàn phím</b> — bấm nút, bàn phím hiện lên, bấm 🎤 trên bàn phím rồi nói.</li>
           <li>Máy tự nhận ra câu là tiếng Việt, Nga hay Anh. Khách vừa nói tiếng nào thì câu nhân viên nói tiếp theo dịch sang tiếng đó.</li>
           <li><b>iPhone:</b> 🎤 nghe theo ngôn ngữ của bàn phím — muốn nói tiếng Anh/Nga thì bấm 🌐 trên bàn phím để đổi sang bàn phím English/Русский trước khi bấm 🎤.</li>
           <li>Dòng <b>↩ Máy hiểu là</b> dịch ngược lại để anh kiểm tra máy dịch có đúng ý không.</li>
@@ -213,7 +214,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   <div class="box" role="dialog" aria-label="Cài đặt">
     <h2>Cài đặt</h2>
     <div class="opt"><label for="oSpeak">Tự đọc to bản dịch</label><input type="checkbox" id="oSpeak"></div>
-    <div class="opt"><label for="oAppMic">Dùng mic của app (thử nghiệm)<small>Tắt = nói bằng 🎤 trên bàn phím điện thoại (khuyên dùng, máy nào cũng chạy). Bật = bấm là nghe ngay, có chế độ Tự động, nhưng một số máy không chạy.</small></label><input type="checkbox" id="oAppMic"></div>
+    <div class="opt"><label for="oAppMic">Bấm mic là nghe ngay<small>Bật = bấm nút là app nghe luôn, có chế độ Tự động. Tắt = nói bằng 🎤 trên bàn phím điện thoại (dùng cho máy mic app không chạy — app tự tắt mục này nếu máy bị lỗi).</small></label><input type="checkbox" id="oAppMic"></div>
     <div class="opt"><label for="oBack">Dịch ngược để kiểm tra<small>Hiện dòng “Máy hiểu là…” dưới câu nhân viên nói</small></label><input type="checkbox" id="oBack"></div>
     <div class="opt"><label for="oRate">Tốc độ đọc</label><input type="range" id="oRate" min="0.6" max="1.3" step="0.05"></div>
     <div class="opt"><label for="vVi">Giọng tiếng Việt</label><select id="vVi" data-lang="vi"></select><button class="test" data-test="vi">Thử</button></div>
@@ -630,7 +631,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       var said = r._text.trim();
       var quick = Date.now() - r._t0 < 1200;
       if (said) {
-        autoMiss = 0; setLive('');
+        autoMiss = 0; emptyRuns = 0; setLive('');
         translateAndShow(said, lang).then(function () { if (autoOn) listen(lang === 'vi' ? S.guest : 'vi', false); });
       } else if (quick && !retried && (!r._err || r._err === 'audio-capture' || r._err === 'no-speech')) {
         // Mic tắt ngay khi vừa mở (hay gặp trên iPhone) → tự mở lại 1 lần
@@ -641,6 +642,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       } else {
         markTurn(null);
         if (quick && retried && (!r._err || r._err === 'no-speech')) micBroken(lang, 'mic-tat-ngay');
+        else if ((!r._err || r._err === 'no-speech') && ++emptyRuns >= 3) micBroken(lang, 'khong-nghe-duoc');
         else if (!r._err || r._err === 'no-speech') setLive('Không nghe thấy gì — bấm mic và nói lại, to và gần máy hơn nhé.');
         else if (r._err === 'aborted') setLive('');
       }
@@ -654,7 +656,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   }
   // ---------- Dự phòng: nói bằng mic của bàn phím điện thoại ----------
   var HARD = { 'not-allowed': 1, 'service-not-allowed': 1, 'audio-capture': 1, 'network': 1, 'language-not-supported': 1 };
-  var kbFallback = false, kbVoice = false, kbT = null;
+  var kbFallback = false, kbVoice = false, kbT = null, emptyRuns = 0;
   function micHelp(code) {
     if (code === 'not-allowed') return isIOS
       ? 'Micro bị chặn. Vào Cài đặt iPhone → Safari → Micro → Cho phép; và Cài đặt → Quyền riêng tư → Nhận dạng lời nói → bật Safari.'
@@ -667,16 +669,18 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       : 'Máy chưa hỗ trợ nghe ngôn ngữ này. Vào Cài đặt → Google → Giọng nói → Ngôn ngữ, thêm Tiếng Việt / English / Русский.';
     if (code === 'audio-capture') return 'Không mở được micro — tắt cuộc gọi / Zalo / app ghi âm đang dùng micro rồi thử lại.';
     if (code === 'network') return 'Mất mạng — máy cần mạng để nghe giọng nói.';
+    if (code === 'khong-nghe-duoc') return 'Mic của app không nghe được trên máy này — đã chuyển sang 🎤 bàn phím.';
     return 'Máy này không mở được micro trong trình duyệt.';
   }
   function micBroken(lang, code) {
-    kbFallback = true;
-    setLive('⚠️ ' + micHelp(code) + ' (mã: ' + code + ') — Tạm thời: bấm vào ô chữ, dùng 🎤 trên bàn phím để nói, nói xong máy tự dịch.');
+    kbFallback = true; S.kbFail = code; save(); applyMode();
+    setLive('⚠️ ' + micHelp(code) + ' (mã: ' + code + ') — Từ giờ máy này nói bằng 🎤 trên bàn phím: bấm nút, bàn phím hiện lên, bấm 🎤 rồi nói, nói xong tự dịch. (Sửa cài đặt xong thì vào ⚙️ bật lại “Bấm mic là nghe ngay”.)');
     kbMode(lang);
   }
   var KB_PH = { vi: 'Bấm 🎤 trên bàn phím rồi nói tiếng Việt…', ru: 'Нажмите 🎤 на клавиатуре и говорите…', en: 'Tap 🎤 on the keyboard and speak…' };
   // Mặc định: nói bằng mic của điện thoại (🎤 trên bàn phím). Máy nào cũng có, ổn định hơn mic trình duyệt.
-  function useKb() { return S.micMode !== 'app' || kbFallback || !SR; }
+  // Mặc định: bấm mic là app nghe ngay. Máy nào mic app lỗi → tự chuyển sang 🎤 bàn phím và nhớ cho máy đó.
+  function useKb() { return S.micMode === 'kb' || S.kbFail || kbFallback || !SR; }
   function kbMode(lang) {
     clearMics();
     $('dir').value = lang === 'vi' ? 'vi>' + S.guest : lang + '>vi';
@@ -917,8 +921,8 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   $('setBtn').addEventListener('click', fillDiag);
   $('diagSpk').onclick = function () { speak('Xin chào, loa đang hoạt động tốt.', 'vi', true); };
   $('diagMic').onclick = function () { kbFallback = false; $('sheet').hidden = true; showTab('chat'); listen('vi', true); };
-  $('oAppMic').onchange = function () { S.micMode = this.checked ? 'app' : 'kb'; kbFallback = false; save(); stopAll(); applyMode(); };
-  $('setBtn').addEventListener('click', function () { $('oAppMic').checked = S.micMode === 'app'; });
+  $('oAppMic').onchange = function () { S.micMode = this.checked ? 'app' : 'kb'; kbFallback = false; S.kbFail = false; emptyRuns = 0; save(); stopAll(); applyMode(); };
+  $('setBtn').addEventListener('click', function () { $('oAppMic').checked = !useKb(); });
 
   applyGuest(); applyMode();
 })();
