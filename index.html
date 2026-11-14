@@ -97,6 +97,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
 .type { display: flex; gap: 8px; margin-top: 10px; }
 .type select, .type input { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
 .type select { padding: 0 4px; font-size: .9rem; }
+.type input.kb { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,164,106,.35); }
 .type input { flex: 1; min-width: 0; padding: 10px 12px; }
 .type button { border-radius: 12px; padding: 0 14px; background: var(--card-2); border: 1px solid var(--gold); color: var(--gold-soft); font-weight: 700; }
 
@@ -585,7 +586,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     'bad-grammar': ''
   };
   function listen(lang, fromTap, retried) {
-    if (!SR) { setLive(noMicMsg()); $('dir').value = lang === 'vi' ? 'vi>' + S.guest : lang + '>vi'; $('typeIn').focus(); return; }
+    if (!SR) { kbMode(lang); setLive(KB_PH[lang]); return; }
     setGuest(lang);
     stopSpeech();
     if (rec) { var old = rec; rec = null; try { old.abort(); } catch (e) {} lastAudio = Date.now(); }
@@ -615,10 +616,8 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     };
     r.onerror = function (e) {
       r._err = e.error;
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        autoOn = false;
-        setLive(fromTap ? '⚠️ Micro đang bị chặn — vào Cài đặt của máy → Safari/Chrome → Micro → Cho phép, rồi mở lại app.' : '👆 Bấm mic để nói tiếp.');
-      } else if (ERR[e.error]) { autoOn = false; setLive(ERR[e.error] + ' (mã: ' + e.error + ')'); }
+      if ((e.error === 'not-allowed' || e.error === 'service-not-allowed') && !fromTap) { autoOn = false; setLive('👆 Bấm mic để nói tiếp.'); return; }
+      if (HARD[e.error]) { autoOn = false; micBroken(lang, e.error); }
     };
     r.onend = function () {
       clearTimeout(guard); clearTimeout(silTimer);
@@ -639,7 +638,8 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
         else listen(lang, false);
       } else {
         markTurn(null);
-        if (!r._err || r._err === 'no-speech') setLive('Không nghe thấy gì — bấm mic và nói lại, to và gần máy hơn nhé.' + (quick ? ' (mã: mic-tat-ngay)' : ''));
+        if (quick && retried && (!r._err || r._err === 'no-speech')) micBroken(lang, 'mic-tat-ngay');
+        else if (!r._err || r._err === 'no-speech') setLive('Không nghe thấy gì — bấm mic và nói lại, to và gần máy hơn nhé.');
         else if (r._err === 'aborted') setLive('');
       }
     };
@@ -647,10 +647,53 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     catch (e) {
       clearTimeout(guard); btn.classList.remove('on'); rec = null; recLang = null;
       if (!retried) setTimeout(function () { listen(lang, fromTap, true); }, 350);
-      else setLive('⚠️ Không mở được micro — thử bấm lại. (mã: ' + (e && e.name || 'start') + ')');
+      else micBroken(lang, e && e.name || 'start');
     }
   }
+  // ---------- Dự phòng: nói bằng mic của bàn phím điện thoại ----------
+  var HARD = { 'not-allowed': 1, 'service-not-allowed': 1, 'audio-capture': 1, 'network': 1, 'language-not-supported': 1 };
+  var kbFallback = false, kbVoice = false, kbT = null;
+  function micHelp(code) {
+    if (code === 'not-allowed') return isIOS
+      ? 'Micro bị chặn. Vào Cài đặt iPhone → Safari → Micro → Cho phép; và Cài đặt → Quyền riêng tư → Nhận dạng lời nói → bật Safari.'
+      : 'Micro bị chặn. Bấm biểu tượng 🔒 / ⓘ cạnh địa chỉ web → Quyền → Micro → Cho phép, rồi tải lại trang.';
+    if (code === 'service-not-allowed') return isIOS
+      ? 'iPhone đang tắt Đọc chính tả. Vào Cài đặt → Cài đặt chung → Bàn phím → bật “Bật Đọc chính tả”, rồi mở lại app.'
+      : 'Máy thiếu dịch vụ giọng nói của Google. Cập nhật / bật ứng dụng “Google” trong CH Play, rồi mở lại.';
+    if (code === 'language-not-supported') return isIOS
+      ? 'iPhone chưa có ngôn ngữ này. Vào Cài đặt → Cài đặt chung → Bàn phím → Bàn phím → thêm Tiếng Việt / English / Русский.'
+      : 'Máy chưa hỗ trợ nghe ngôn ngữ này. Vào Cài đặt → Google → Giọng nói → Ngôn ngữ, thêm Tiếng Việt / English / Русский.';
+    if (code === 'audio-capture') return 'Không mở được micro — tắt cuộc gọi / Zalo / app ghi âm đang dùng micro rồi thử lại.';
+    if (code === 'network') return 'Mất mạng — máy cần mạng để nghe giọng nói.';
+    return 'Máy này không mở được micro trong trình duyệt.';
+  }
+  function micBroken(lang, code) {
+    kbFallback = true;
+    setLive('⚠️ ' + micHelp(code) + ' (mã: ' + code + ') — Tạm thời: bấm vào ô chữ, dùng 🎤 trên bàn phím để nói, nói xong máy tự dịch.');
+    kbMode(lang);
+  }
+  var KB_PH = { vi: 'Bấm 🎤 trên bàn phím rồi nói tiếng Việt…', ru: 'Нажмите 🎤 на клавиатуре и говорите…', en: 'Tap 🎤 on the keyboard and speak…' };
+  function kbMode(lang) {
+    clearMics();
+    $('dir').value = lang === 'vi' ? 'vi>' + S.guest : lang + '>vi';
+    if (lang !== 'vi') setGuest(lang);
+    kbVoice = true;
+    var i = $('typeIn'); i.placeholder = KB_PH[lang]; i.classList.add('kb'); i.focus();
+  }
+  // Đang nói qua bàn phím: ngừng ~1,8 giây là tự dịch và đọc
+  $('typeIn').addEventListener('input', function () {
+    if (!kbVoice) return;
+    clearTimeout(kbT);
+    var i = this;
+    kbT = setTimeout(function () { if (i.value.trim()) { primeAudio(); $('typeForm').requestSubmit ? $('typeForm').requestSubmit() : $('typeForm').onsubmit(new Event('submit')); } }, 1800);
+  });
+  $('typeIn').addEventListener('blur', function () {
+    var i = this;
+    setTimeout(function () { if (document.activeElement !== i) { kbVoice = false; i.placeholder = 'Hoặc gõ chữ để dịch…'; i.classList.remove('kb'); } }, 300);
+  });
   function onMic(lang) {
+    // Máy này không dùng được mic trình duyệt → chuyển thẳng sang mic bàn phím (mở bàn phím ngay khi bấm)
+    if (kbFallback || !SR) { kbMode(lang); setLive(KB_PH[lang]); return; }
     if (S.mode === 'auto') {
       if (autoOn && recLang === lang) { stopAll(); setLive('Đã dừng tự động.'); return; }
       stopAll(); autoOn = true; autoMiss = 0; listen(lang, true); return;
@@ -846,7 +889,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   }
   $('setBtn').addEventListener('click', fillDiag);
   $('diagSpk').onclick = function () { speak('Xin chào, loa đang hoạt động tốt.', 'vi', true); };
-  $('diagMic').onclick = function () { $('sheet').hidden = true; showTab('chat'); onMic('vi'); };
+  $('diagMic').onclick = function () { kbFallback = false; $('sheet').hidden = true; showTab('chat'); onMic('vi'); };
 
   applyGuest(); applyMode();
 })();
