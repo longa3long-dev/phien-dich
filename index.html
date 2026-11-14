@@ -108,6 +108,22 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
 .show .row button { border: 1px solid #ccc; background: #f4f4f4; border-radius: 999px; padding: 10px 18px; color: #111; }
 .show.flip .inner { transform: rotate(180deg); }
 
+.gate { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.82); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.gate[hidden] { display: none; }
+.gate .box { width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--gold); border-radius: 22px; padding: 22px 20px; text-align: center; }
+.gate-ico { font-size: 2rem; }
+.gate h2 { margin: 6px 0 8px; font-size: 1.2rem; color: var(--gold-soft); }
+.gate p { margin: 0 0 10px; color: var(--muted); font-size: .92rem; }
+.gate ol { text-align: left; margin: 0 0 14px; padding-left: 22px; font-size: 1rem; }
+.gate li { margin-bottom: 8px; }
+.gate li b { color: var(--gold-soft); }
+.gate .close { margin-top: 4px; }
+.ghost { display: block; width: 100%; margin-top: 10px; border: 1px solid var(--line); background: var(--card-2); border-radius: 14px; padding: 11px; font-weight: 600; }
+.diag { margin-top: 14px; padding: 12px; border: 1px dashed var(--line); border-radius: 14px; font-size: .86rem; }
+.diag b { color: var(--gold-soft); }
+.diag #diagText { color: var(--muted); margin: 6px 0 10px; line-height: 1.6; }
+.diag-btns { display: flex; gap: 8px; }
+.diag-btns .test { flex: 1; padding: 10px; font-size: .9rem; }
 .sheet { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.6); display: flex; align-items: flex-end; justify-content: center; }
 .sheet .box { width: 100%; max-width: 560px; max-height: 88dvh; overflow-y: auto; background: var(--card); border: 1px solid var(--line); border-radius: 22px 22px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); }
 .sheet h2 { margin: 0 0 12px; font-size: 1.1rem; color: var(--gold-soft); }
@@ -201,7 +217,24 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     <div class="opt"><label for="vRu">Giọng tiếng Nga</label><select id="vRu" data-lang="ru"></select><button class="test" data-test="ru">Thử</button></div>
     <div class="opt"><label for="vEn">Giọng tiếng Anh</label><select id="vEn" data-lang="en"></select><button class="test" data-test="en">Thử</button></div>
     <p class="hint" style="margin-top:12px">Giọng có chữ “Natural”, “Neural”, “Enhanced”, “Premium” hoặc “Siri” nghe tự nhiên nhất. Trên iPhone có thể tải thêm giọng hay: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói.</p>
+    <div class="diag">
+      <b>🔧 Kiểm tra máy</b>
+      <div id="diagText"></div>
+      <div class="diag-btns"><button class="test" id="diagMic">🎤 Thử mic</button><button class="test" id="diagSpk">🔊 Thử loa</button></div>
+    </div>
     <button class="close" id="sheetClose">Xong</button>
+  </div>
+</div>
+
+<div class="gate" id="gate" hidden>
+  <div class="box" role="dialog" aria-label="Mở bằng trình duyệt">
+    <div class="gate-ico">🎤🔊</div>
+    <h2>Mở bằng <span id="gateBrowser">Safari</span> để nói và nghe được</h2>
+    <p id="gateWhy"></p>
+    <ol id="gateSteps"></ol>
+    <button class="close" id="gateOpen" hidden>Mở bằng Chrome</button>
+    <button class="ghost" id="gateCopy">📋 Sao chép link</button>
+    <button class="ghost" id="gateSkip">Vẫn dùng ở đây (chỉ gõ chữ)</button>
   </div>
 </div>
 
@@ -721,6 +754,71 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   $('sheetClose').onclick = function () { $('sheet').hidden = true; };
   $('sheet').onclick = function (e) { if (e.target === this) this.hidden = true; };
   $('clearBtn').onclick = function () { stopAll(); log.innerHTML = ''; $('empty').hidden = false; setLive(''); stopSpeech(); };
+
+  // ---------- Mở trong Zalo/Facebook… → hướng dẫn mở bằng Safari/Chrome ----------
+  var isAndroid = /Android/i.test(UA);
+  var IN_APP = [['Zalo', /Zalo/i], ['Messenger', /FB_IAB|FBAN|FBAV|FBIOS|Messenger/i], ['Instagram', /Instagram/i], ['TikTok', /musical_ly|Bytedance|TikTok/i], ['Line', /Line\//], ['Telegram', /Telegram/i]];
+  var inAppName = null;
+  IN_APP.forEach(function (x) { if (!inAppName && x[1].test(UA)) inAppName = x[0]; });
+  if (!inAppName && isAndroid && /; wv\)/.test(UA)) inAppName = 'ứng dụng';
+  function browserName() {
+    if (inAppName) return 'trình duyệt trong ' + inAppName;
+    if (/SamsungBrowser/i.test(UA)) return 'Samsung Internet';
+    if (/CriOS/i.test(UA)) return 'Chrome (iPhone)';
+    if (/EdgA|EdgiOS|Edg\//i.test(UA)) return 'Edge';
+    if (/Firefox|FxiOS/i.test(UA)) return 'Firefox';
+    if (/Chrome/i.test(UA)) return 'Chrome';
+    if (/Safari/i.test(UA)) return 'Safari';
+    return 'không rõ';
+  }
+  function showGate() {
+    var target = isIOS ? 'Safari' : 'Chrome';
+    $('gateBrowser').textContent = target;
+    $('gateWhy').textContent = inAppName
+      ? 'Anh/chị đang mở link trong ' + inAppName + '. Trình duyệt trong ' + inAppName + ' chặn micro và loa nên không nói, không nghe được.'
+      : 'Trình duyệt này (' + browserName() + ') không hỗ trợ nghe giọng nói.';
+    var steps = [];
+    if (inAppName && isIOS) {
+      steps.push('Bấm dấu <b>•••</b> hoặc <b>⋯</b> ở góc trên bên phải màn hình.');
+      steps.push('Chọn <b>Mở bằng trình duyệt</b> / <b>Mở trong Safari</b>.');
+    } else if (inAppName) {
+      steps.push('Bấm nút <b>Mở bằng Chrome</b> bên dưới.');
+      steps.push('Nếu không được: bấm <b>⋮</b> góc trên bên phải → <b>Mở bằng trình duyệt</b>.');
+    } else {
+      steps.push('Bấm <b>📋 Sao chép link</b> bên dưới.');
+      steps.push('Mở <b>' + target + '</b>, dán link vào thanh địa chỉ.');
+    }
+    steps.push('Lần đầu bấm mic, máy hỏi quyền micro: chọn <b>Cho phép</b>.');
+    steps.push(isIOS ? 'Để lần sau mở nhanh: trong Safari bấm <b>Chia sẻ</b> → <b>Thêm vào MH chính</b>.' : 'Để lần sau mở nhanh: trong Chrome bấm <b>⋮</b> → <b>Thêm vào màn hình chính</b>.');
+    $('gateSteps').innerHTML = steps.map(function (s) { return '<li>' + s + '</li>'; }).join('');
+    $('gateOpen').hidden = !(isAndroid && inAppName);
+    $('gate').hidden = false;
+  }
+  $('gateOpen').onclick = function () {
+    location.href = 'intent://' + location.host + location.pathname + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end';
+  };
+  $('gateCopy').onclick = function () {
+    var url = location.origin + location.pathname, b = this;
+    function ok() { b.textContent = '✅ Đã sao chép — dán vào ' + (isIOS ? 'Safari' : 'Chrome'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, function () { prompt('Sao chép link này:', url); });
+    else prompt('Sao chép link này:', url);
+  };
+  $('gateSkip').onclick = function () { $('gate').hidden = true; };
+  if (inAppName || !SR) showGate();
+
+  // ---------- Kiểm tra máy (trong ⚙️) ----------
+  function fillDiag() {
+    var c = function (l) { return voicesFor(l).length; };
+    $('diagText').innerHTML = '';
+    [['Trình duyệt', browserName()],
+     ['Nghe giọng nói (mic)', SR && !inAppName ? '✅ Có' : '❌ Không — mở bằng ' + (isIOS ? 'Safari' : 'Chrome')],
+     ['Giọng đọc có sẵn', 'Việt ' + c('vi') + ' · Nga ' + c('ru') + ' · Anh ' + c('en') + (c('vi') && c('ru') ? '' : ' (thiếu thì tự dùng giọng Google qua mạng)')],
+     ['Mạng', navigator.onLine ? '✅ Có mạng' : '❌ Mất mạng']
+    ].forEach(function (r) { var d = document.createElement('div'); d.textContent = r[0] + ': ' + r[1]; $('diagText').appendChild(d); });
+  }
+  $('setBtn').addEventListener('click', fillDiag);
+  $('diagSpk').onclick = function () { speak('Xin chào, loa đang hoạt động tốt.', 'vi', true); };
+  $('diagMic').onclick = function () { $('sheet').hidden = true; showTab('chat'); onMic('vi'); };
 
   applyGuest(); applyMode();
 })();
