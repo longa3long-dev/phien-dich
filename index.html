@@ -34,7 +34,7 @@ header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; paddi
 header h1 { margin: 0; flex: 1; font-size: 1.1rem; font-weight: 700; color: var(--gold-soft); line-height: 1.15; }
 header h1 small { display: block; font-size: .7rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .seg { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
-.seg button { border: 0; background: none; border-radius: 999px; padding: 6px 11px; font-size: .88rem; font-weight: 600; color: var(--muted); }
+.seg button { border: 0; background: none; border-radius: 999px; padding: 6px 9px; font-size: .84rem; white-space: nowrap; font-weight: 600; color: var(--muted); }
 .seg button[aria-pressed="true"] { background: linear-gradient(180deg, var(--g-1), var(--g-2)); color: #0b1430; }
 .round { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); font-size: 1.05rem; flex: 0 0 auto; }
 
@@ -83,13 +83,17 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
 .live:empty::before { content: attr(data-hint); color: var(--muted); font-size: .82rem; }
 .modes { display: flex; justify-content: center; margin-bottom: 10px; }
 .modes .seg button[aria-pressed="true"] { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1310; }
-.mics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .mic { border: 0; border-radius: 20px; padding: 14px 8px; font-weight: 700; font-size: 1.02rem; line-height: 1.25; display: flex; flex-direction: column; align-items: center; gap: 2px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
 .mic small { font-weight: 500; font-size: .74rem; opacity: .8; }
 .mic.staff { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1310; }
 .mic.guest { background: linear-gradient(180deg, var(--g-1), var(--g-2)); color: #0b1430; }
 .mic.guest.en { background: linear-gradient(180deg, #8fe0bd, #2fa57a); color: #062a1c; }
-.mic.wide { grid-column: 1 / -1; padding: 12px 8px; }
+.mic.wide { grid-column: 1 / -1; padding: 12px 8px; font-size: 1.05rem; }
+.mic.guest { padding: 11px 4px; font-size: .95rem; }
+.mic.guest small { font-size: .7rem; }
+@media (max-width: 480px) { header h1 small { display: none; } header h1 { white-space: nowrap; font-size: 1rem; } .round { width: 34px; height: 34px; font-size: .95rem; } .seg button { padding: 6px 7px; font-size: .8rem; } header { gap: 6px; padding-left: 12px; padding-right: 12px; } }
+.mic.guest.zh { background: linear-gradient(180deg, #ffb4a3, #e0533f); color: #2a0805; }
 .msg .alt { font-size: .92rem; color: #d9d2c8; margin-top: 4px; }
 .mic.on { animation: pulse 1.1s infinite; }
 .mic.turn { outline: 3px solid #fff; outline-offset: 2px; }
@@ -143,10 +147,11 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
 <body>
 <div class="app">
   <header>
-    <h1>Phiên dịch<small>Việt · Русский · English</small></h1>
+    <h1>Phiên dịch<small>Việt · Русский · English · 中文</small></h1>
     <div class="seg" id="guestSeg" role="group" aria-label="Ngôn ngữ của khách">
       <button data-g="ru" aria-pressed="true">🇷🇺 Nga</button>
       <button data-g="en" aria-pressed="false">🇬🇧 Anh</button>
+      <button data-g="zh" aria-pressed="false">🇨🇳 Trung</button>
     </div>
     <button class="round" id="clearBtn" title="Xoá cuộc trò chuyện" aria-label="Xoá cuộc trò chuyện">🗑</button>
     <button class="round" id="setBtn" title="Cài đặt" aria-label="Cài đặt">⚙️</button>
@@ -164,10 +169,10 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       <div class="empty" id="empty">
         <ol>
           <li><b>Nhân viên:</b> bấm nút vàng rồi nói tiếng Việt. Ngừng nói là máy tự dịch và đọc to cho khách.</li>
-          <li><b>Khách Nga</b> bấm nút xanh dương, <b>khách nói tiếng Anh</b> bấm nút xanh lá rồi nói. Máy dịch ra tiếng Việt và đọc to.</li>
+          <li><b>Khách Nga</b> bấm nút xanh dương, <b>khách nói tiếng Anh</b> bấm nút xanh lá, <b>khách Trung</b> bấm nút đỏ, rồi nói. Máy dịch ra tiếng Việt và đọc to.</li>
           <li>Máy nào bấm mic không nghe được: app tự chuyển sang <b>🎤 trên bàn phím</b> — bấm nút, bàn phím hiện lên, bấm 🎤 trên bàn phím rồi nói.</li>
           <li>Máy tự nhận ra câu là tiếng Việt, Nga hay Anh. Khách vừa nói tiếng nào thì câu nhân viên nói tiếp theo dịch sang tiếng đó.</li>
-          <li><b>iPhone:</b> 🎤 nghe theo ngôn ngữ của bàn phím — muốn nói tiếng Anh/Nga thì bấm 🌐 trên bàn phím để đổi sang bàn phím English/Русский trước khi bấm 🎤.</li>
+          <li><b>iPhone:</b> 🎤 nghe theo ngôn ngữ của bàn phím — muốn nói tiếng Anh/Nga thì bấm 🌐 trên bàn phím để đổi sang bàn phím English / Русский / 简体中文 trước khi bấm 🎤.</li>
           <li>Dòng <b>↩ Máy hiểu là</b> dịch ngược lại để anh kiểm tra máy dịch có đúng ý không.</li>
           <li>Bấm <b>⛶ Phóng to</b> để khách đọc chữ to.</li>
         </ol>
@@ -199,8 +204,9 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     </div>
     <div class="mics">
       <button class="mic staff wide" id="micStaff">🎤 🇻🇳 Nhân viên nói<small id="staffSub">Nói tiếng Việt → tự dịch và đọc tiếng Nga</small></button>
-      <button class="mic guest" id="micRu" lang="ru">🎤 🇷🇺 Гость<small>Говорите по-русски</small></button>
+      <button class="mic guest" id="micRu" lang="ru">🎤 🇷🇺 Гость<small>По-русски</small></button>
       <button class="mic guest en" id="micEn" lang="en">🎤 🇬🇧 Guest<small>Speak English</small></button>
+      <button class="mic guest zh" id="micZh" lang="zh">🎤 🇨🇳 客人<small>请说中文</small></button>
     </div>
     <form class="type" id="typeForm">
       <select id="dir" aria-label="Chiều dịch"></select>
@@ -220,6 +226,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     <div class="opt"><label for="vVi">Giọng tiếng Việt</label><select id="vVi" data-lang="vi"></select><button class="test" data-test="vi">Thử</button></div>
     <div class="opt"><label for="vRu">Giọng tiếng Nga</label><select id="vRu" data-lang="ru"></select><button class="test" data-test="ru">Thử</button></div>
     <div class="opt"><label for="vEn">Giọng tiếng Anh</label><select id="vEn" data-lang="en"></select><button class="test" data-test="en">Thử</button></div>
+    <div class="opt"><label for="vZh">Giọng tiếng Trung</label><select id="vZh" data-lang="zh"></select><button class="test" data-test="zh">Thử</button></div>
     <p class="hint" style="margin-top:12px">Giọng có chữ “Natural”, “Neural”, “Enhanced”, “Premium” hoặc “Siri” nghe tự nhiên nhất. Trên iPhone có thể tải thêm giọng hay: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói.</p>
     <div class="diag">
       <b>🔧 Kiểm tra máy</b>
@@ -258,11 +265,13 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   var L = {
     vi: { name: 'Tiếng Việt', speech: 'vi-VN', flag: '🇻🇳', test: 'Xin chào, chào mừng anh chị đến tiệm.' },
     ru: { name: 'Русский', speech: 'ru-RU', flag: '🇷🇺', test: 'Здравствуйте! Добро пожаловать в наш салон.' },
-    en: { name: 'English', speech: 'en-US', flag: '🇬🇧', test: 'Hello! Welcome to our salon.' }
+    en: { name: 'English', speech: 'en-US', flag: '🇬🇧', test: 'Hello! Welcome to our salon.' },
+    zh: { name: '中文', speech: 'zh-CN', flag: '🇨🇳', test: '您好！欢迎光临我们的美发店。' }
   };
   var UI = {
     ru: { mic: 'Гость говорит', sub: 'Говорите по-русски', listen: 'Слушаю… говорите по-русски', hint: 'Đưa máy cho khách chọn câu trả lời. Нажмите на нужную фразу.', currency: function (f) { return 'Итого: ' + f + ' донгов (VND)'; } },
-    en: { mic: 'Guest speaks', sub: 'Speak in English', listen: 'Listening… please speak English', hint: 'Đưa máy cho khách chọn câu trả lời. Tap the phrase you want to say.', currency: function (f) { return 'Total: ' + f + ' VND'; } }
+    en: { mic: 'Guest speaks', sub: 'Speak in English', listen: 'Listening… please speak English', hint: 'Đưa máy cho khách chọn câu trả lời. Tap the phrase you want to say.', currency: function (f) { return 'Total: ' + f + ' VND'; } },
+    zh: { mic: '客人说话', sub: '请说中文', listen: '正在听…请说中文', hint: 'Đưa máy cho khách chọn câu trả lời. 请点击您想说的话。', currency: function (f) { return '总计：' + f + ' 越南盾 (VND)'; } }
   };
 
   // ---------- Cài đặt (lưu trên máy) ----------
@@ -337,6 +346,21 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     ['Мне очень нравится!', 'I love it!', 'Tôi rất thích!'], ['Мне не нравится', "I don't like it", 'Tôi không thích'],
     ['Я хочу записаться ещё раз', 'I want to book again', 'Tôi muốn đặt lịch lần sau']
   ];
+  // Tiếng Trung (giản thể) — cùng thứ tự với câu mẫu ở trên
+  var STAFF_ZH = {
+    'Chào hỏi': ['您好！欢迎光临 Glow Hair Studio！', '您有预约吗？', '请坐，请稍等一下。', '大约10分钟后轮到您。', '您想喝茶还是喝水？', '不好意思，我会用翻译软件和您沟通。'],
+    'Dịch vụ': ['您想做什么服务？', '您想剪头发吗？', '您想洗头吗？', '您想染什么颜色？', '您想烫发吗？', '您想把头发拉直吗？', '您的头发有点干，建议做护理修复。', '您有想要的发型照片吗？请给我看看。', '您想剪短几厘米？', '只修一下发尾，对吗？', '刘海也要剪吗？', '这是我们的价目表。'],
+    'Đang làm': ['请坐这张椅子。', '请到洗头区。', '水会不会太烫？', '如果有不舒服，请告诉我。', '这样可以吗？', '还要再短一点吗？', '大约需要1个小时。', '大约需要2个小时。', '大约需要3个小时。', '您需要吹干造型吗？', '需要等大约30分钟让药水发挥作用。'],
+    'Thanh toán': ['您想用现金、刷卡还是扫码转账付款？', '请扫这个二维码付款。', '价格包含洗头和吹干。', '这是找您的零钱。', '付款成功，谢谢您。'],
+    'Kết thúc': ['好了！您看看满意吗？', '可以拍一下您的发型放在我们的主页上吗？', '请在 Google 上给我们五星好评！', '下次您可以在 glowhairstudio.net 网站上预约。', '谢谢！欢迎再次光临！']
+  };
+  var GUEST_ZH = ['是的', '不是', '谢谢！', '我听不懂', '请稍等一下', '多少钱？', '需要多长时间？', '我想要照片上的样子', '再短一点', '可以了，这样很好', '只修发尾', '刘海不要剪', '水太烫了', '水太凉了', '我觉得不舒服 / 有点疼', '可以刷卡吗？', '我付现金', '洗手间在哪里？', '可以给我一杯水吗？', '我非常喜欢！', '我不喜欢', '我想再预约一次'];
+  Object.keys(STAFF).forEach(function (c) { STAFF[c].forEach(function (p, i) { p[3] = STAFF_ZH[c][i]; }); });
+  GUEST.forEach(function (p, i) { p[3] = GUEST_ZH[i]; });
+  var GL = ['ru', 'en', 'zh'];                       // các tiếng của khách
+  function sT(p, l) { return p[{ ru: 1, en: 2, zh: 3 }[l]]; }   // câu mẫu nhân viên → tiếng khách
+  function gT(p, l) { return p[{ ru: 0, en: 1, zh: 3 }[l]]; }   // câu khách đáp theo tiếng khách
+  function gt(l) { return l === 'zh' ? 'zh-CN' : l; }           // mã ngôn ngữ cho Google
 
   // ---------- Dịch thông minh ----------
   var B = '(?<![\\p{L}\\p{M}])', E = '(?![\\p{L}\\p{M}])';
@@ -369,18 +393,18 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   function norm(t) { return t.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
   // Câu trùng câu mẫu → dùng bản dịch chuẩn có sẵn
   var BOOK = {};
-  Object.keys(STAFF).forEach(function (c) { STAFF[c].forEach(function (p) { BOOK['vi:' + norm(p[0])] = { ru: p[1], en: p[2] }; }); });
-  GUEST.forEach(function (p) { BOOK['ru:' + norm(p[0])] = { vi: p[2] }; BOOK['en:' + norm(p[1])] = { vi: p[2] }; });
+  Object.keys(STAFF).forEach(function (c) { STAFF[c].forEach(function (p) { BOOK['vi:' + norm(p[0])] = { ru: p[1], en: p[2], zh: p[3] }; }); });
+  GUEST.forEach(function (p) { BOOK['ru:' + norm(p[0])] = { vi: p[2] }; BOOK['en:' + norm(p[1])] = { vi: p[2] }; BOOK['zh:' + norm(p[3])] = { vi: p[2] }; });
 
   var cache = {};
   function gtx(text, from, to) {
     var key = from + to + text;
     if (cache[key]) return Promise.resolve(cache[key]);
-    var u = 'https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=' + from + '&tl=' + to + '&q=' + encodeURIComponent(text);
+    var u = 'https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=' + gt(from) + '&tl=' + gt(to) + '&q=' + encodeURIComponent(text);
     return fetch(u).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
       return d[0].map(function (s) { return s[0]; }).join('');
     }).catch(function () {
-      var m = 'https://api.mymemory.translated.net/get?langpair=' + from + '|' + to + '&q=' + encodeURIComponent(text);
+      var m = 'https://api.mymemory.translated.net/get?langpair=' + gt(from) + '|' + gt(to) + '&q=' + encodeURIComponent(text);
       return fetch(m).then(function (r) { return r.json(); }).then(function (d) {
         if (!d.responseData || !d.responseData.translatedText) throw new Error('mymemory');
         return d.responseData.translatedText;
@@ -393,6 +417,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     var src = from === 'vi' ? prepVi(text) : from === 'en' ? text.replace(/\bfringe\b/gi, 'bangs').replace(/\btrim\b/gi, 'trim the ends') : text;
     return gtx(src, from, to).then(function (out) {
       if (to === 'ru') out = formalRu(out);
+      if (to === 'zh') out = out.replace(/你(?!们)/g, '您'); // xưng hô lịch sự với khách
       return { text: out, book: false };
     });
   }
@@ -455,7 +480,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
         if (i >= list.length) return resolve();
         audio.onended = function () { next(); };
         audio.onerror = function () { resolve(false); };
-        audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + lang + '&q=' + encodeURIComponent(list[i++].trim());
+        audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + gt(lang) + '&q=' + encodeURIComponent(list[i++].trim());
         audio.playbackRate = S.rate;
         var p = audio.play();
         if (p) p.catch(function (e) { if (e && e.name === 'NotAllowedError') blocked(); resolve(false); });
@@ -525,12 +550,13 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       t.append(b1, b2);
       if (from === 'vi') {
         // Hiện thêm bản dịch ngôn ngữ còn lại (Nga ↔ Anh) để khách nào cũng đọc được
-        var altLang = to === 'ru' ? 'en' : 'ru';
-        var al = document.createElement('div'); al.className = 'alt'; al.lang = altLang;
-        el.insertBefore(al, t);
-        var showAlt = function (x) { al.textContent = L[altLang].flag + ' ' + x; };
-        if (res.alt) showAlt(res.alt);
-        else smartTranslate(src, 'vi', altLang).then(function (x) { showAlt(x.text); }, function () { al.remove(); });
+        GL.filter(function (l) { return l !== to; }).forEach(function (altLang) {
+          var al = document.createElement('div'); al.className = 'alt'; al.lang = altLang;
+          el.insertBefore(al, t);
+          var showAlt = function (x) { al.textContent = L[altLang].flag + ' ' + x; };
+          if (res.alt && res.alt[altLang]) showAlt(res.alt[altLang]);
+          else smartTranslate(src, 'vi', altLang).then(function (x) { showAlt(x.text); }, function () { al.remove(); });
+        });
       }
       if (from === 'vi' && S.back && !res.book) {
         var bk = document.createElement('div'); bk.className = 'back'; bk.textContent = '↩ Máy hiểu là: …';
@@ -566,10 +592,10 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       : '⚠️ Trình duyệt này chưa nghe được giọng nói — dùng Safari (iPhone) hoặc Chrome (Android, máy tính). Tạm thời gõ chữ hoặc dùng 🎤 trên bàn phím.';
   }
   function setHint() { live.dataset.hint = !SR ? noMicMsg() : S.mode === 'auto' ? 'Bấm 1 nút mic để bắt đầu — máy tự chuyển lượt nhân viên ↔ khách' : 'Bấm mic rồi nói — ngừng nói là tự dịch và đọc to'; }
-  function btnFor(lang) { return lang === 'vi' ? $('micStaff') : lang === 'ru' ? $('micRu') : $('micEn'); }
-  function clearMics() { ['micStaff', 'micRu', 'micEn'].forEach(function (id) { $(id).classList.remove('on', 'turn'); }); }
+  function btnFor(lang) { return $({ vi: 'micStaff', ru: 'micRu', en: 'micEn', zh: 'micZh' }[lang]); }
+  function clearMics() { ['micStaff', 'micRu', 'micEn', 'micZh'].forEach(function (id) { $(id).classList.remove('on', 'turn'); }); }
   function markTurn(lang) {
-    ['micStaff', 'micRu', 'micEn'].forEach(function (id) { $(id).classList.remove('turn'); });
+    ['micStaff', 'micRu', 'micEn', 'micZh'].forEach(function (id) { $(id).classList.remove('turn'); });
     if (autoOn && lang) btnFor(lang).classList.add('turn');
   }
   function stopAll() {
@@ -677,7 +703,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     setLive('⚠️ ' + micHelp(code) + ' (mã: ' + code + ') — Từ giờ máy này nói bằng 🎤 trên bàn phím: bấm nút, bàn phím hiện lên, bấm 🎤 rồi nói, nói xong tự dịch. (Sửa cài đặt xong thì vào ⚙️ bật lại “Bấm mic là nghe ngay”.)');
     kbMode(lang);
   }
-  var KB_PH = { vi: /Android/i.test(navigator.userAgent) ? 'Bấm 🎤 trên bàn phím (Samsung: 🎤 ở thanh trên bàn phím) rồi nói…' : 'Bấm 🎤 trên bàn phím rồi nói tiếng Việt…', ru: 'Нажмите 🎤 на клавиатуре и говорите…', en: 'Tap 🎤 on the keyboard and speak…' };
+  var KB_PH = { vi: /Android/i.test(navigator.userAgent) ? 'Bấm 🎤 trên bàn phím (Samsung: 🎤 ở thanh trên bàn phím) rồi nói…' : 'Bấm 🎤 trên bàn phím rồi nói tiếng Việt…', ru: 'Нажмите 🎤 на клавиатуре и говорите…', en: 'Tap 🎤 on the keyboard and speak…', zh: '点击键盘上的 🎤 然后说话…' };
   // Mặc định: nói bằng mic của điện thoại (🎤 trên bàn phím). Máy nào cũng có, ổn định hơn mic trình duyệt.
   // Mặc định: bấm mic là app nghe ngay. Máy nào mic app lỗi → tự chuyển sang 🎤 bàn phím và nhớ cho máy đó.
   // Android (Samsung…): mic trình duyệt lúc được lúc không → mặc định dùng 🎤 bàn phím. iPhone: mic app.
@@ -698,6 +724,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   // Nhận ra tiếng của câu: chữ Nga → Nga; có dấu tiếng Việt → Việt; còn lại → Anh
   var VI_CH = /[ăâđêôơưạảãáàặẳẵắằậẩẫấầẹẻẽéèệểễếềịỉĩíìọỏõóòộổỗốồợởỡớờụủũúùựửữứừỵỷỹýỳ]/i;
   function detectLang(t) {
+    if (/[一-鿿]/.test(t)) return 'zh';
     if (/[Ѐ-ӿ]/.test(t)) return 'ru';
     if (VI_CH.test(t)) return 'vi';
     if (/[a-z]/i.test(t)) return /\b(the|you|is|are|can|do|i|my|what|how|please|thank|want|it)\b/i.test(t) ? 'en' : null;
@@ -726,7 +753,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     if (rec && recLang === lang) { try { rec.stop(); } catch (e) {} return; }
     listen(lang, true);
   }
-  [['micStaff', 'vi'], ['micRu', 'ru'], ['micEn', 'en']].forEach(function (p) {
+  [['micStaff', 'vi'], ['micRu', 'ru'], ['micEn', 'en'], ['micZh', 'zh']].forEach(function (p) {
     var b = $(p[0]);
     b.addEventListener('click', function () { onMic(p[1]); });
     b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
@@ -766,8 +793,8 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     STAFF[curCat].forEach(function (p) {
       var b = document.createElement('button'); b.className = 'phrase';
       b.innerHTML = '<span class="a"></span><span class="b"></span>';
-      b.firstChild.textContent = p[0]; b.lastChild.textContent = p[gi()]; b.lastChild.lang = S.guest;
-      b.onclick = function () { addMsg(p[0], 'vi', S.guest, true).fill({ text: p[gi()], book: true, alt: p[gi() === 1 ? 2 : 1] }); };
+      b.firstChild.textContent = p[0]; b.lastChild.textContent = sT(p, S.guest); b.lastChild.lang = S.guest;
+      b.onclick = function () { var alt = {}; GL.forEach(function (l) { alt[l] = sT(p, l); }); addMsg(p[0], 'vi', S.guest, true).fill({ text: sT(p, S.guest), book: true, alt: alt }); };
       list.appendChild(b);
     });
   }
@@ -775,7 +802,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     $('guestHint').textContent = UI[S.guest].hint;
     var list = $('guestList'); list.innerHTML = '';
     GUEST.forEach(function (p) {
-      var g = S.guest === 'ru' ? p[0] : p[1];
+      var g = gT(p, S.guest);
       var b = document.createElement('button'); b.className = 'phrase g';
       b.innerHTML = '<span class="a"></span><span class="b"></span>';
       b.firstChild.textContent = g; b.firstChild.lang = S.guest; b.lastChild.textContent = p[2];
@@ -785,9 +812,9 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   }
   function applyGuest() {
     document.querySelectorAll('#guestSeg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.g === S.guest); });
-    $('staffSub').textContent = 'Nói tiếng Việt → tự dịch và đọc tiếng ' + (S.guest === 'ru' ? 'Nga' : 'Anh');
+    $('staffSub').textContent = 'Nói tiếng Việt → tự dịch và đọc tiếng ' + { ru: 'Nga', en: 'Anh', zh: 'Trung' }[S.guest];
     var dv = $('dir').value;
-    $('dir').innerHTML = '<option value="vi>ru">VI→RU</option><option value="vi>en">VI→EN</option><option value="ru>vi">RU→VI</option><option value="en>vi">EN→VI</option>';
+    $('dir').innerHTML = '<option value="vi>ru">VI→RU</option><option value="vi>en">VI→EN</option><option value="vi>zh">VI→ZH</option><option value="ru>vi">RU→VI</option><option value="en>vi">EN→VI</option><option value="zh>vi">ZH→VI</option>';
     $('dir').value = dv && dv.indexOf('vi>') !== 0 ? dv : 'vi>' + S.guest;
     renderStaff(); renderGuest();
   }
@@ -811,8 +838,8 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   $('priceBtn').onclick = function () {
     var n = parseInt(($('priceIn').value || '').replace(/\D/g, ''), 10);
     if (!n) { $('priceIn').focus(); return; }
-    var f = n.toLocaleString(S.guest === 'ru' ? 'ru-RU' : 'en-US').replace(/ | /g, ' ');
-    addMsg('Tổng cộng: ' + n.toLocaleString('vi-VN') + ' đồng', 'vi', S.guest, true).fill({ text: UI[S.guest].currency(f), book: true });
+    var f = n.toLocaleString({ ru: 'ru-RU', en: 'en-US', zh: 'zh-CN' }[S.guest]).replace(/ | /g, ' ');
+    addMsg('Tổng cộng: ' + n.toLocaleString('vi-VN') + ' đồng', 'vi', S.guest, true).fill({ text: UI[S.guest].currency(f), book: true, alt: (function () { var a = {}; GL.forEach(function (l) { a[l] = UI[l].currency(n.toLocaleString({ ru: 'ru-RU', en: 'en-US', zh: 'zh-CN' }[l]).replace(/ | /g, ' ')); }); return a; })() });
     $('priceIn').value = '';
   };
 
@@ -829,7 +856,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
 
   // ---------- Cài đặt ----------
   function fillVoices() {
-    [['vVi', 'vi'], ['vRu', 'ru'], ['vEn', 'en']].forEach(function (p) {
+    [['vVi', 'vi'], ['vRu', 'ru'], ['vEn', 'en'], ['vZh', 'zh']].forEach(function (p) {
       var sel = $(p[0]), vs = voicesFor(p[1]), chosen = voiceFor(p[1]);
       sel.innerHTML = '<option value="' + GVOICE + '">🌐 Giọng Google (qua mạng)</option>';
       vs.forEach(function (v) {
