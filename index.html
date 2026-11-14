@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Phiên dịch Việt – Nga – Anh</title>
+<meta name="description" content="Phiên dịch giọng nói Việt – Nga – Anh cho tiệm tóc: nói là dịch, đọc to bằng giọng tự nhiên.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0f0c0a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Phiên dịch">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root {
+  --bg: #0f0c0a; --card: #1a1512; --card-2: #241c16; --ink: #f1e8dc; --muted: #a99a8a;
+  --gold: #c9a46a; --gold-soft: #dcc394; --line: #2e2620;
+  --g-bg: #17203a; --g-line: #2a3966; --g-1: #8eb1ff; --g-2: #4f7ff0;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--font); -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.app { display: flex; flex-direction: column; height: 100dvh; max-width: 900px; margin: 0 auto; }
+
+header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top)); border-bottom: 1px solid var(--line); }
+header h1 { margin: 0; flex: 1; font-size: 1.1rem; font-weight: 700; color: var(--gold-soft); line-height: 1.15; }
+header h1 small { display: block; font-size: .7rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.seg { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; border-radius: 999px; padding: 6px 11px; font-size: .88rem; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: linear-gradient(180deg, var(--g-1), var(--g-2)); color: #0b1430; }
+.round { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); font-size: 1.05rem; flex: 0 0 auto; }
+
+.tabs { display: flex; gap: 6px; padding: 10px 14px 0; }
+.tabs button { flex: 1; border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 9px 4px; font-size: .88rem; font-weight: 600; white-space: nowrap; }
+.tabs button[aria-selected="true"] { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1310; border-color: transparent; }
+
+main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: touch; }
+.panel[hidden] { display: none; }
+
+.empty { color: var(--muted); padding: 18px 6px; font-size: .95rem; }
+.empty ol { margin: 8px 0 0; padding-left: 20px; }
+.empty li { margin-bottom: 8px; }
+.empty b { color: var(--gold-soft); font-weight: 600; }
+
+.msg { max-width: 90%; margin: 0 0 14px; padding: 12px 14px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); }
+.msg.staff { margin-right: auto; border-bottom-left-radius: 6px; }
+.msg.guest { margin-left: auto; background: var(--g-bg); border-color: var(--g-line); border-bottom-right-radius: 6px; }
+.msg .src { font-size: .86rem; color: var(--muted); }
+.msg .dst { font-size: 1.3rem; line-height: 1.35; margin-top: 4px; font-weight: 600; color: #fff; }
+.msg .back { font-size: .8rem; color: var(--muted); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,.12); padding-top: 6px; }
+.msg .back b { color: var(--gold-soft); font-weight: 500; }
+.msg .tools { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.msg .tools button { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); border-radius: 999px; padding: 5px 11px; font-size: .8rem; }
+.msg.pending .dst { color: var(--muted); font-weight: 400; font-style: italic; font-size: 1rem; }
+.tag { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .06em; padding: 1px 6px; border-radius: 6px; background: rgba(220,195,148,.15); color: var(--gold-soft); margin-left: 6px; vertical-align: 1px; }
+
+.cats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+.cats::-webkit-scrollbar { display: none; }
+.cats button { flex: 0 0 auto; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 14px; font-size: .88rem; }
+.cats button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold-soft); }
+.list { display: grid; gap: 8px; }
+@media (min-width: 700px) { .list { grid-template-columns: 1fr 1fr; } }
+.phrase { text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 11px 14px; }
+.phrase:active { transform: scale(.98); }
+.phrase .a { display: block; font-weight: 600; }
+.phrase .b { display: block; font-size: .88rem; color: var(--muted); margin-top: 2px; }
+.phrase.g { background: var(--g-bg); border-color: var(--g-line); }
+.hint { color: var(--muted); font-size: .86rem; margin: 0 0 10px; }
+.price { display: flex; gap: 8px; margin: 0 0 14px; }
+.price input { flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-weight: 600; }
+.price button { border: 0; border-radius: 12px; padding: 0 16px; background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1310; font-weight: 700; }
+
+.bar { border-top: 1px solid var(--line); padding: 10px 14px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); background: var(--bg); }
+.live { min-height: 1.4em; text-align: center; font-size: 1.05rem; color: #fff; margin-bottom: 8px; }
+.live:empty::before { content: attr(data-hint); color: var(--muted); font-size: .82rem; }
+.modes { display: flex; justify-content: center; margin-bottom: 10px; }
+.modes .seg button[aria-pressed="true"] { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1310; }
+.mics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mic { border: 0; border-radius: 20px; padding: 14px 8px; font-weight: 700; font-size: 1.02rem; line-height: 1.25; display: flex; flex-direction: column; align-items: center; gap: 2px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.mic small { font-weight: 500; font-size: .74rem; opacity: .8; }
+.mic.staff { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1310; }
+.mic.guest { background: linear-gradient(180deg, var(--g-1), var(--g-2)); color: #0b1430; }
+.mic.on { animation: pulse 1.1s infinite; }
+.mic.turn { outline: 3px solid #fff; outline-offset: 2px; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,.45); } 50% { box-shadow: 0 0 0 10px rgba(255,255,255,0); } }
+.type { display: flex; gap: 8px; margin-top: 10px; }
+.type select, .type input { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.type select { padding: 0 4px; font-size: .9rem; }
+.type input { flex: 1; min-width: 0; padding: 10px 12px; }
+.type button { border-radius: 12px; padding: 0 14px; background: var(--card-2); border: 1px solid var(--gold); color: var(--gold-soft); font-weight: 700; }
+
+.show { position: fixed; inset: 0; z-index: 50; background: #fff; color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; text-align: center; }
+.show[hidden], .sheet[hidden] { display: none; }
+.show .big { font-weight: 700; font-size: clamp(2rem, 8vw, 4.2rem); line-height: 1.2; }
+.show .orig { color: #777; font-size: 1.1rem; margin-top: 18px; }
+.show .row { position: absolute; bottom: calc(24px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
+.show .row button { border: 1px solid #ccc; background: #f4f4f4; border-radius: 999px; padding: 10px 18px; color: #111; }
+.show.flip .inner { transform: rotate(180deg); }
+
+.sheet { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.6); display: flex; align-items: flex-end; justify-content: center; }
+.sheet .box { width: 100%; max-width: 560px; max-height: 88dvh; overflow-y: auto; background: var(--card); border: 1px solid var(--line); border-radius: 22px 22px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); }
+.sheet h2 { margin: 0 0 12px; font-size: 1.1rem; color: var(--gold-soft); }
+.opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.opt label { flex: 1; }
+.opt small { display: block; color: var(--muted); font-size: .78rem; }
+.opt select { max-width: 55%; background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 7px; font-size: .85rem; }
+.opt input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--gold); }
+.opt input[type=range] { width: 45%; accent-color: var(--gold); }
+.opt .test { border: 1px solid var(--line); background: var(--card-2); border-radius: 10px; padding: 6px 10px; font-size: .8rem; }
+.sheet .close { margin-top: 14px; width: 100%; border: 0; border-radius: 14px; padding: 12px; background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1310; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .mic.on { animation: none; outline: 3px solid #fff; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Phiên dịch<small>Việt · Русский · English</small></h1>
+    <div class="seg" id="guestSeg" role="group" aria-label="Ngôn ngữ của khách">
+      <button data-g="ru" aria-pressed="true">🇷🇺 Nga</button>
+      <button data-g="en" aria-pressed="false">🇬🇧 Anh</button>
+    </div>
+    <button class="round" id="clearBtn" title="Xoá cuộc trò chuyện" aria-label="Xoá cuộc trò chuyện">🗑</button>
+    <button class="round" id="setBtn" title="Cài đặt" aria-label="Cài đặt">⚙️</button>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="chat">💬 Hội thoại</button>
+    <button role="tab" aria-selected="false" data-tab="staff">📋 Câu mẫu</button>
+    <button role="tab" aria-selected="false" data-tab="guest">🙋 Khách đáp</button>
+  </div>
+
+  <main id="main">
+    <section class="panel" id="p-chat">
+      <div id="log"></div>
+      <div class="empty" id="empty">
+        <ol>
+          <li><b>Nhấn để nói:</b> bấm nút vàng rồi nói tiếng Việt, ngừng nói là máy tự dịch và đọc to cho khách. Muốn chắc ăn thì <b>giữ nút</b> trong lúc nói, nói xong thả tay ra.</li>
+          <li>Khách bấm <b>nút xanh</b> và nói tiếng của họ, máy dịch ra tiếng Việt.</li>
+          <li><b>Tự động:</b> máy tự nghe lần lượt, nhân viên nói xong thì tới lượt khách, rồi quay lại nhân viên. Không cần bấm nữa.</li>
+          <li>Dòng <b>↩ Máy hiểu là</b> dịch ngược lại để anh kiểm tra máy dịch có đúng ý không.</li>
+          <li>Bấm <b>⛶ Phóng to</b> để khách đọc chữ to.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="panel" id="p-staff" hidden>
+      <div class="price">
+        <input id="priceIn" inputmode="numeric" placeholder="Báo giá: nhập số tiền, vd 350000" aria-label="Số tiền">
+        <button id="priceBtn">Báo giá</button>
+      </div>
+      <div class="cats" id="cats"></div>
+      <div class="list" id="staffList"></div>
+    </section>
+
+    <section class="panel" id="p-guest" hidden>
+      <p class="hint" id="guestHint"></p>
+      <div class="list" id="guestList"></div>
+    </section>
+  </main>
+
+  <div class="bar">
+    <div class="live" id="live" data-hint="" aria-live="polite"></div>
+    <div class="modes">
+      <div class="seg" id="modeSeg" role="group" aria-label="Chế độ nghe">
+        <button data-m="ptt" aria-pressed="true">👆 Nhấn để nói</button>
+        <button data-m="auto" aria-pressed="false">🔁 Tự động</button>
+      </div>
+    </div>
+    <div class="mics">
+      <button class="mic staff" id="micStaff">🎤 🇻🇳 Nhân viên<small>Nói tiếng Việt</small></button>
+      <button class="mic guest" id="micGuest"></button>
+    </div>
+    <form class="type" id="typeForm">
+      <select id="dir" aria-label="Chiều dịch"></select>
+      <input id="typeIn" placeholder="Hoặc gõ chữ để dịch…" autocomplete="off" aria-label="Gõ chữ để dịch">
+      <button type="submit">Dịch</button>
+    </form>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="box" role="dialog" aria-label="Cài đặt">
+    <h2>Cài đặt</h2>
+    <div class="opt"><label for="oSpeak">Tự đọc to bản dịch</label><input type="checkbox" id="oSpeak"></div>
+    <div class="opt"><label for="oBack">Dịch ngược để kiểm tra<small>Hiện dòng “Máy hiểu là…” dưới câu nhân viên nói</small></label><input type="checkbox" id="oBack"></div>
+    <div class="opt"><label for="oRate">Tốc độ đọc</label><input type="range" id="oRate" min="0.6" max="1.3" step="0.05"></div>
+    <div class="opt"><label for="vVi">Giọng tiếng Việt</label><select id="vVi" data-lang="vi"></select><button class="test" data-test="vi">Thử</button></div>
+    <div class="opt"><label for="vRu">Giọng tiếng Nga</label><select id="vRu" data-lang="ru"></select><button class="test" data-test="ru">Thử</button></div>
+    <div class="opt"><label for="vEn">Giọng tiếng Anh</label><select id="vEn" data-lang="en"></select><button class="test" data-test="en">Thử</button></div>
+    <p class="hint" style="margin-top:12px">Giọng có chữ “Natural”, “Neural”, “Enhanced”, “Premium” hoặc “Siri” nghe tự nhiên nhất. Trên iPhone có thể tải thêm giọng hay: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói.</p>
+    <button class="close" id="sheetClose">Xong</button>
+  </div>
+</div>
+
+<div class="show" id="show" hidden>
+  <div class="inner"><div class="big" id="showBig"></div><div class="orig" id="showOrig"></div></div>
+  <div class="row">
+    <button id="showSpeak">🔊 Đọc</button>
+    <button id="showFlip">🔄 Xoay</button>
+    <button id="showClose">✕ Đóng</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var L = {
+    vi: { name: 'Tiếng Việt', speech: 'vi-VN', flag: '🇻🇳', test: 'Xin chào, chào mừng anh chị đến tiệm.' },
+    ru: { name: 'Русский', speech: 'ru-RU', flag: '🇷🇺', test: 'Здравствуйте! Добро пожаловать в наш салон.' },
+    en: { name: 'English', speech: 'en-US', flag: '🇬🇧', test: 'Hello! Welcome to our salon.' }
+  };
+  var UI = {
+    ru: { mic: 'Гость говорит', sub: 'Говорите по-русски', listen: 'Слушаю… говорите по-русски', hint: 'Đưa máy cho khách chọn câu trả lời. Нажмите на нужную фразу.', currency: function (f) { return 'Итого: ' + f + ' донгов (VND)'; } },
+    en: { mic: 'Guest speaks', sub: 'Speak in English', listen: 'Listening… please speak English', hint: 'Đưa máy cho khách chọn câu trả lời. Tap the phrase you want to say.', currency: function (f) { return 'Total: ' + f + ' VND'; } }
+  };
+
+  // ---------- Cài đặt (lưu trên máy) ----------
+  var S = { guest: 'ru', mode: 'ptt', speak: true, back: true, rate: 0.95, voice: {} };
+  try { var saved = JSON.parse(localStorage.getItem('phien-dich') || '{}'); for (var k in saved) S[k] = saved[k]; } catch (e) {}
+  function save() { try { localStorage.setItem('phien-dich', JSON.stringify(S)); } catch (e) {} }
+
+  // ---------- Câu mẫu: [Việt, Nga, Anh] ----------
+  var STAFF = {
+    'Chào hỏi': [
+      ['Xin chào! Chào mừng anh/chị đến Glow Hair Studio!', 'Здравствуйте! Добро пожаловать в Glow Hair Studio!', 'Hello! Welcome to Glow Hair Studio!'],
+      ['Anh/chị đã đặt lịch trước chưa?', 'Вы записывались заранее?', 'Do you have an appointment?'],
+      ['Mời anh/chị ngồi chờ một chút ạ.', 'Присаживайтесь, пожалуйста. Подождите немного.', 'Please have a seat, it will be just a moment.'],
+      ['Khoảng 10 phút nữa sẽ đến lượt anh/chị.', 'Ваша очередь примерно через 10 минут.', 'It will be your turn in about 10 minutes.'],
+      ['Anh/chị uống trà hay nước lọc?', 'Хотите чай или воду?', 'Would you like tea or water?'],
+      ['Xin lỗi, em dùng máy dịch để nói chuyện nhé.', 'Извините, я буду общаться с Вами через переводчик.', 'Sorry, I will use a translator to talk with you.']
+    ],
+    'Dịch vụ': [
+      ['Anh/chị muốn làm dịch vụ gì?', 'Какую услугу Вы хотите?', 'Which service would you like?'],
+      ['Anh/chị muốn cắt tóc phải không?', 'Вы хотите подстричься?', 'Would you like a haircut?'],
+      ['Anh/chị có muốn gội đầu không?', 'Хотите помыть голову?', 'Would you like a hair wash?'],
+      ['Anh/chị muốn nhuộm màu gì?', 'В какой цвет Вы хотите покраситься?', 'What colour would you like?'],
+      ['Anh/chị có muốn uốn tóc không?', 'Хотите сделать завивку?', 'Would you like a perm?'],
+      ['Anh/chị có muốn duỗi thẳng tóc không?', 'Хотите выпрямить волосы?', 'Would you like your hair straightened?'],
+      ['Tóc anh/chị hơi khô, em khuyên nên làm phục hồi.', 'Ваши волосы немного сухие, рекомендую восстанавливающий уход.', 'Your hair is a little dry, I recommend a repair treatment.'],
+      ['Anh/chị có ảnh mẫu không? Cho em xem nhé.', 'У Вас есть фото желаемой причёски? Покажите, пожалуйста.', 'Do you have a photo of the style you want? Please show me.'],
+      ['Anh/chị muốn cắt ngắn bao nhiêu phân?', 'Сколько сантиметров отрезать?', 'How many centimetres should I cut?'],
+      ['Chỉ tỉa nhẹ phần đuôi thôi đúng không ạ?', 'Только подровнять кончики, верно?', 'Just a trim of the ends, right?'],
+      ['Có cắt mái không ạ?', 'Чёлку тоже подстричь?', 'Should I cut the fringe too?'],
+      ['Đây là bảng giá của tiệm.', 'Вот наш прайс-лист.', 'Here is our price list.']
+    ],
+    'Đang làm': [
+      ['Mời anh/chị ngồi ghế này.', 'Садитесь, пожалуйста, в это кресло.', 'Please sit in this chair.'],
+      ['Mời anh/chị qua gội đầu.', 'Пройдите, пожалуйста, к мойке.', 'Please come to the wash basin.'],
+      ['Nước có nóng quá không ạ?', 'Вода не слишком горячая?', 'Is the water too hot?'],
+      ['Đau hay khó chịu thì báo em nhé.', 'Если будет неприятно, скажите мне, пожалуйста.', 'Please tell me if anything is uncomfortable.'],
+      ['Như thế này được chưa ạ?', 'Так нормально?', 'Is this okay?'],
+      ['Có muốn ngắn hơn nữa không ạ?', 'Сделать ещё короче?', 'Would you like it shorter?'],
+      ['Làm khoảng 1 tiếng.', 'Это займёт примерно 1 час.', 'It will take about 1 hour.'],
+      ['Làm khoảng 2 tiếng.', 'Это займёт примерно 2 часа.', 'It will take about 2 hours.'],
+      ['Làm khoảng 3 tiếng.', 'Это займёт примерно 3 часа.', 'It will take about 3 hours.'],
+      ['Anh/chị có muốn sấy tạo kiểu không?', 'Хотите укладку?', 'Would you like a blow-dry and styling?'],
+      ['Chờ thuốc ngấm khoảng 30 phút nhé.', 'Нужно подождать примерно 30 минут, пока подействует состав.', 'We need to wait about 30 minutes for the product to work.']
+    ],
+    'Thanh toán': [
+      ['Anh/chị trả tiền mặt, thẻ hay chuyển khoản?', 'Как Вам удобнее оплатить: наличными, картой или переводом по QR-коду?', 'Would you like to pay by cash, card or QR transfer?'],
+      ['Anh/chị quét mã QR này để chuyển khoản nhé.', 'Отсканируйте, пожалуйста, этот QR-код для оплаты.', 'Please scan this QR code to pay.'],
+      ['Giá đã bao gồm gội và sấy.', 'В стоимость входит мытьё головы и укладка.', 'The price includes washing and blow-drying.'],
+      ['Em gửi lại tiền thừa ạ.', 'Вот Ваша сдача.', 'Here is your change.'],
+      ['Thanh toán xong rồi, cảm ơn anh/chị.', 'Оплата прошла, спасибо.', 'Payment complete, thank you.']
+    ],
+    'Kết thúc': [
+      ['Xong rồi ạ! Anh/chị xem có ưng không?', 'Готово! Посмотрите, Вам нравится?', 'All done! Do you like it?'],
+      ['Em chụp ảnh tóc anh/chị đăng trang của tiệm được không?', 'Можно сфотографировать Вашу причёску для нашей страницы?', 'May I take a photo of your hair for our page?'],
+      ['Anh/chị đánh giá 5 sao trên Google giúp tiệm nhé!', 'Пожалуйста, оставьте нам отзыв на 5 звёзд в Google!', 'Please leave us a 5-star review on Google!'],
+      ['Lần sau anh/chị đặt lịch trên web glowhairstudio.net nhé.', 'В следующий раз Вы можете записаться на сайте glowhairstudio.net.', 'Next time you can book on our website glowhairstudio.net.'],
+      ['Cảm ơn anh/chị! Hẹn gặp lại!', 'Спасибо! Будем рады видеть Вас снова!', 'Thank you! See you again!']
+    ]
+  };
+  // Khách đáp: [Nga, Anh, Việt]
+  var GUEST = [
+    ['Да', 'Yes', 'Có / Vâng'], ['Нет', 'No', 'Không'], ['Спасибо!', 'Thank you!', 'Cảm ơn!'],
+    ['Я не понимаю', "I don't understand", 'Tôi không hiểu'], ['Подождите минутку', 'Wait a moment, please', 'Chờ tôi một chút'],
+    ['Сколько стоит?', 'How much is it?', 'Bao nhiêu tiền?'], ['Сколько по времени?', 'How long will it take?', 'Mất bao lâu?'],
+    ['Я хочу как на фото', 'I want it like in the photo', 'Tôi muốn giống như ảnh'],
+    ['Немного короче', 'A little shorter', 'Cắt ngắn thêm một chút'], ['Хватит, так хорошо', "That's enough, it's good", 'Đủ rồi, như vậy là đẹp'],
+    ['Только кончики', 'Just the ends', 'Chỉ tỉa phần đuôi thôi'], ['Чёлку не трогайте', "Don't cut the fringe", 'Đừng cắt mái'],
+    ['Вода горячая', 'The water is hot', 'Nước nóng quá'], ['Вода холодная', 'The water is cold', 'Nước lạnh quá'],
+    ['Мне неприятно / больно', 'It hurts / it is uncomfortable', 'Tôi thấy khó chịu / đau'],
+    ['Можно картой?', 'Can I pay by card?', 'Trả bằng thẻ được không?'], ['Я заплачу наличными', 'I will pay cash', 'Tôi trả tiền mặt'],
+    ['Где туалет?', 'Where is the toilet?', 'Nhà vệ sinh ở đâu?'], ['Можно воды?', 'Can I have some water?', 'Cho tôi xin ly nước'],
+    ['Мне очень нравится!', 'I love it!', 'Tôi rất thích!'], ['Мне не нравится', "I don't like it", 'Tôi không thích'],
+    ['Я хочу записаться ещё раз', 'I want to book again', 'Tôi muốn đặt lịch lần sau']
+  ];
+
+  // ---------- Dịch thông minh ----------
+  var B = '(?<![\\p{L}\\p{M}])', E = '(?![\\p{L}\\p{M}])';
+  function rx(s) { return new RegExp(s, 'giu'); }
+  // Câu nói của nhân viên: làm rõ ngữ cảnh salon + xưng hô lịch sự trước khi dịch
+  var VI_RULES = [
+    [rx('(?<!tiếng\\s)' + B + '(anh\\s*/\\s*chị|anh chị|anh|chị|cô|bạn)' + E + '(?!\\s+(ấy|ta|ngữ|quốc|em|trai|gái|họ|kia))'), 'quý khách'],
+    [rx('(?<!(anh|chị|con|cháu)\\s)' + B + '(em|mình)' + E), 'tôi'],
+    [rx(B + 'uốn' + E + '(?!\\s+(xoăn|cụp|phồng|lơi|sóng|tóc|lạnh|nóng|setting))'), 'uốn xoăn tóc'],
+    [rx(B + 'duỗi' + E + '(?!\\s+thẳng)'), 'duỗi thẳng tóc'],
+    [rx(B + 'ép' + E + '(?!\\s+(thẳng|tóc))'), 'ép thẳng tóc'],
+    [rx('(?<!tóc\\s)' + B + 'mái' + E + '(?!\\s+(nhà|tóc))'), 'tóc mái'],
+    [rx(B + 'hấp' + E + '(?!\\s+dầu)'), 'hấp dầu'],
+    [rx(B + 'phục hồi' + E + '(?!\\s+tóc)'), 'phục hồi tóc'],
+    [rx(B + 'gội' + E + '(?!\\s+đầu)'), 'gội đầu'],
+    [rx(B + 'tẩy' + E + '(?!\\s+(màu|tóc))'), 'tẩy màu tóc']
+  ];
+  function prepVi(t) { t = t.normalize('NFC'); VI_RULES.forEach(function (r) { t = t.replace(r[0], r[1]); }); return t; }
+  // Tiếng Nga: đổi "ты" thân mật sang "Вы" lịch sự với khách
+  var RU_FORMAL = { 'ты': 'вы', 'тебя': 'вас', 'тебе': 'вам', 'тобой': 'вами', 'твой': 'ваш', 'твоя': 'ваша', 'твоё': 'ваше', 'твое': 'ваше', 'твои': 'ваши', 'твоего': 'вашего', 'твоей': 'вашей', 'твоих': 'ваших', 'твоим': 'вашим', 'твою': 'вашу', 'твоему': 'вашему',
+    'хочешь': 'хотите', 'можешь': 'можете', 'будешь': 'будете', 'желаешь': 'желаете', 'знаешь': 'знаете', 'понимаешь': 'понимаете', 'любишь': 'любите', 'предпочитаешь': 'предпочитаете', 'сделаешь': 'сделаете', 'платишь': 'платите', 'заплатишь': 'заплатите', 'выбираешь': 'выбираете', 'думаешь': 'думаете', 'нужно ли тебе': 'нужно ли вам',
+    'позволь': 'позвольте', 'скажи': 'скажите', 'подожди': 'подождите', 'садись': 'садитесь', 'посмотри': 'посмотрите', 'иди': 'идите', 'выбери': 'выберите', 'покажи': 'покажите', 'приходи': 'приходите', 'ложись': 'ложитесь', 'расслабься': 'расслабьтесь' };
+  var RU_RX = new RegExp(B + '(' + Object.keys(RU_FORMAL).sort(function (a, b) { return b.length - a.length; }).join('|') + ')' + E, 'giu');
+  function formalRu(t) {
+    return t.replace(RU_RX, function (m) {
+      var r = RU_FORMAL[m.toLowerCase()] || m;
+      return m[0] === m[0].toUpperCase() ? r[0].toUpperCase() + r.slice(1) : r;
+    });
+  }
+  function norm(t) { return t.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
+  // Câu trùng câu mẫu → dùng bản dịch chuẩn có sẵn
+  var BOOK = {};
+  Object.keys(STAFF).forEach(function (c) { STAFF[c].forEach(function (p) { BOOK['vi:' + norm(p[0])] = { ru: p[1], en: p[2] }; }); });
+  GUEST.forEach(function (p) { BOOK['ru:' + norm(p[0])] = { vi: p[2] }; BOOK['en:' + norm(p[1])] = { vi: p[2] }; });
+
+  var cache = {};
+  function gtx(text, from, to) {
+    var key = from + to + text;
+    if (cache[key]) return Promise.resolve(cache[key]);
+    var u = 'https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=' + from + '&tl=' + to + '&q=' + encodeURIComponent(text);
+    return fetch(u).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      return d[0].map(function (s) { return s[0]; }).join('');
+    }).catch(function () {
+      var m = 'https://api.mymemory.translated.net/get?langpair=' + from + '|' + to + '&q=' + encodeURIComponent(text);
+      return fetch(m).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.responseData || !d.responseData.translatedText) throw new Error('mymemory');
+        return d.responseData.translatedText;
+      });
+    }).then(function (out) { cache[key] = out; return out; });
+  }
+  function smartTranslate(text, from, to) {
+    var hit = BOOK[from + ':' + norm(text)];
+    if (hit && hit[to]) return Promise.resolve({ text: hit[to], book: true });
+    var src = from === 'vi' ? prepVi(text) : from === 'en' ? text.replace(/\bfringe\b/gi, 'bangs').replace(/\btrim\b/gi, 'trim the ends') : text;
+    return gtx(src, from, to).then(function (out) {
+      if (to === 'ru') out = formalRu(out);
+      return { text: out, book: false };
+    });
+  }
+
+  // ---------- Đọc to ----------
+  var synth = window.speechSynthesis || null;
+  var GOOD = /natural|neural|premium|enhanced|siri|google|online|wavenet/i;
+  function voicesFor(lang) {
+    if (!synth) return [];
+    return synth.getVoices().filter(function (v) { return v.lang.toLowerCase().replace('_', '-').indexOf(lang) === 0; })
+      .sort(function (a, b) { return (GOOD.test(b.name) - GOOD.test(a.name)) || (b.lang.toLowerCase() === L[lang].speech.toLowerCase()) - (a.lang.toLowerCase() === L[lang].speech.toLowerCase()); });
+  }
+  var GVOICE = '__google';
+  function voiceFor(lang) {
+    if (S.voice[lang] === GVOICE) return GVOICE;
+    var vs = voicesFor(lang);
+    return vs.find(function (v) { return v.voiceURI === S.voice[lang]; }) || vs[0] || GVOICE;
+  }
+  // Giọng Google qua mạng: dùng khi máy không có sẵn giọng Nga/Việt/Anh
+  var audio = new Audio(); audio.preload = 'auto';
+  var SILENT = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+xDEAAPAAAGkAAAAIAAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxDwDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+  var unlocked = false;
+  document.addEventListener('pointerdown', function () {
+    if (unlocked) return; unlocked = true;
+    try { audio.src = SILENT; audio.play().catch(function () {}); } catch (e) {}
+  }, true);
+  function chunks(text) {
+    var parts = text.match(/[^.!?。,;:\n]+[.!?。,;:\n]*/g) || [text], out = [], cur = '';
+    parts.forEach(function (p) {
+      if ((cur + p).length > 180) { if (cur) out.push(cur); while (p.length > 180) { out.push(p.slice(0, 180)); p = p.slice(180); } cur = p; }
+      else cur += p;
+    });
+    if (cur.trim()) out.push(cur);
+    return out;
+  }
+  function speakGoogle(text, lang) {
+    var list = chunks(text), i = 0;
+    return new Promise(function (resolve) {
+      function next() {
+        if (i >= list.length) return resolve();
+        audio.onended = function () { next(); };
+        audio.onerror = function () { resolve(); };
+        audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + lang + '&q=' + encodeURIComponent(list[i++].trim());
+        audio.playbackRate = S.rate;
+        audio.play().catch(function () { resolve(); });
+      }
+      next();
+    });
+  }
+  var speaking = false;
+  function stopSpeech() { if (synth) synth.cancel(); try { audio.pause(); } catch (e) {} }
+  function speak(text, lang, force) {
+    if (!text || (!S.speak && !force)) return Promise.resolve();
+    stopSpeech();
+    if (!synth || voiceFor(lang) === GVOICE) {
+      speaking = true;
+      return Promise.race([speakGoogle(text, lang), new Promise(function (r) { setTimeout(r, 4000 + text.length * 150); })]).then(function () { speaking = false; });
+    }
+    return new Promise(function (resolve) {
+      var done = false;
+      function fin() { if (!done) { done = true; speaking = false; resolve(); } }
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = L[lang].speech; u.rate = S.rate;
+      var v = voiceFor(lang); if (v) u.voice = v;
+      u.onend = fin; u.onerror = fin;
+      speaking = true;
+      synth.speak(u);
+      setTimeout(fin, 3000 + text.length * 140);
+    });
+  }
+
+  // ---------- Hội thoại ----------
+  var log = $('log');
+  function other(lang) { return lang === 'vi' ? S.guest : 'vi'; }
+  function scrollEnd() { requestAnimationFrame(function () { $('main').scrollTop = $('main').scrollHeight; }); }
+  function addMsg(src, from, to, ready) {
+    $('empty').hidden = true;
+    var el = document.createElement('div');
+    el.className = 'msg ' + (from === 'vi' ? 'staff' : 'guest') + (ready ? '' : ' pending');
+    var s = document.createElement('div'); s.className = 'src'; s.textContent = L[from].flag + ' ' + src;
+    var d = document.createElement('div'); d.className = 'dst'; d.lang = to;
+    var t = document.createElement('div'); t.className = 'tools';
+    el.append(s, d, t);
+    log.appendChild(el);
+    showTab('chat'); scrollEnd();
+    function fill(res) {
+      el.classList.remove('pending');
+      d.textContent = L[to].flag + ' ' + res.text;
+      if (res.book) { var tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = 'CÂU CHUẨN'; s.appendChild(tg); }
+      t.innerHTML = '';
+      var b1 = document.createElement('button'); b1.textContent = '🔊 Đọc lại'; b1.onclick = function () { speak(res.text, to, true); };
+      var b2 = document.createElement('button'); b2.textContent = '⛶ Phóng to'; b2.onclick = function () { openShow(res.text, src, to); };
+      t.append(b1, b2);
+      if (from === 'vi' && S.back && !res.book) {
+        var bk = document.createElement('div'); bk.className = 'back'; bk.textContent = '↩ Máy hiểu là: …';
+        el.insertBefore(bk, t);
+        gtx(res.text, to, 'vi').then(function (x) { bk.innerHTML = '↩ Máy hiểu là: <b></b>'; bk.lastChild.textContent = x; }, function () { bk.remove(); });
+      }
+      scrollEnd();
+      return speak(res.text, to);
+    }
+    if (!ready) d.textContent = 'Đang dịch…';
+    return {
+      fill: fill,
+      fail: function () { el.classList.remove('pending'); d.textContent = '⚠️ Không dịch được — kiểm tra mạng rồi thử lại.'; }
+    };
+  }
+  function translateAndShow(text, from) {
+    text = (text || '').trim(); if (!text) return Promise.resolve();
+    var to = other(from);
+    var m = addMsg(text, from, to, false);
+    return smartTranslate(text, from, to).then(m.fill, m.fail);
+  }
+
+  // ---------- Nghe giọng nói (nhấn để nói / tự động ngắt câu) ----------
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, recLang = null, autoOn = false, autoMiss = 0, holdTimer = null, pressAt = 0;
+  var live = $('live');
+  function setLive(t) { live.textContent = t || ''; }
+  function setHint() { live.dataset.hint = SR ? (S.mode === 'auto' ? 'Bấm một nút mic để bắt đầu tự động — máy tự chuyển lượt' : 'Bấm để nói (ngừng nói là tự dịch) · hoặc giữ nút trong lúc nói') : 'Máy này chưa nghe được giọng nói — dùng 🎤 trên bàn phím để đọc vào ô chữ.'; }
+  function markTurn(lang) {
+    $('micStaff').classList.toggle('turn', autoOn && lang === 'vi');
+    $('micGuest').classList.toggle('turn', autoOn && lang !== 'vi');
+  }
+  function stopAll() {
+    autoOn = false; markTurn(null);
+    if (rec) { try { rec.abort(); } catch (e) {} }
+    rec = null; recLang = null;
+    $('micStaff').classList.remove('on'); $('micGuest').classList.remove('on');
+  }
+  function listen(lang) {
+    if (!SR) { setLive(''); $('dir').value = lang === 'vi' ? 'vi' : 'g'; $('typeIn').focus(); return; }
+    stopSpeech();
+    var r = new SR(); rec = r; recLang = lang;
+    r.lang = L[lang].speech; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+    var btn = lang === 'vi' ? $('micStaff') : $('micGuest');
+    btn.classList.add('on'); markTurn(lang);
+    setLive(lang === 'vi' ? '🎙 Đang nghe tiếng Việt…' : '🎙 ' + UI[S.guest].listen);
+    r._text = '';
+    r.onresult = function (e) {
+      var fin = '', tmp = '';
+      for (var i = 0; i < e.results.length; i++) { if (e.results[i].isFinal) fin += e.results[i][0].transcript; else tmp += e.results[i][0].transcript; }
+      r._text = (fin + ' ' + tmp).trim();
+      setLive('“' + r._text + '”');
+    };
+    r.onerror = function (e) {
+      r._err = e.error;
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { autoOn = false; setLive('⚠️ Chưa cho phép micro — bấm “Cho phép” micro rồi thử lại.'); }
+      else if (e.error === 'network') setLive('⚠️ Mất mạng — không nghe được.');
+    };
+    r.onend = function () {
+      btn.classList.remove('on');
+      if (rec !== r) return;
+      rec = null; recLang = null;
+      var said = r._text.trim();
+      if (said) {
+        autoMiss = 0; setLive('');
+        translateAndShow(said, lang).then(function () { if (autoOn) listen(other(lang)); });
+      } else if (autoOn && !r._err || autoOn && r._err === 'no-speech') {
+        if (++autoMiss > 6) { stopAll(); setLive('Tạm dừng tự động vì lâu không ai nói. Bấm mic để tiếp tục.'); }
+        else listen(lang);
+      } else { markTurn(null); if (!r._err || r._err === 'no-speech' || r._err === 'aborted') setLive(r._err === 'no-speech' ? 'Không nghe thấy gì — bấm lại và nói to hơn nhé.' : ''); }
+    };
+    try { r.start(); } catch (e) { btn.classList.remove('on'); rec = null; setLive('Không mở được micro.'); }
+  }
+  function onPress(lang, ev) {
+    ev.preventDefault();
+    pressAt = Date.now();
+    if (S.mode === 'auto') {
+      if (autoOn && recLang === lang) { stopAll(); setLive('Đã dừng tự động.'); return; }
+      stopAll(); autoOn = true; autoMiss = 0; listen(lang); return;
+    }
+    if (rec) { var same = recLang === lang; try { rec.stop(); } catch (e) {} if (same) { pressAt = 0; return; } }
+    listen(lang);
+  }
+  function onRelease() {
+    // Giữ nút > 0,6 giây = nhấn-giữ để nói: thả tay là dừng nghe và dịch
+    if (S.mode === 'ptt' && rec && pressAt && Date.now() - pressAt > 600) { try { rec.stop(); } catch (e) {} }
+    pressAt = 0;
+  }
+  [['micStaff', 'vi'], ['micGuest', null]].forEach(function (p) {
+    var b = $(p[0]);
+    b.addEventListener('pointerdown', function (e) { onPress(p[1] || S.guest, e); });
+    b.addEventListener('pointerup', onRelease);
+    b.addEventListener('pointerleave', onRelease);
+    b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  });
+
+  $('typeForm').onsubmit = function (e) {
+    e.preventDefault();
+    var v = $('typeIn').value; $('typeIn').value = '';
+    translateAndShow(v, $('dir').value === 'vi' ? 'vi' : S.guest);
+  };
+
+  // ---------- Tabs, câu mẫu ----------
+  function showTab(name) {
+    document.querySelectorAll('.tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name); });
+    ['chat', 'staff', 'guest'].forEach(function (n) { $('p-' + n).hidden = n !== name; });
+  }
+  document.querySelectorAll('.tabs button').forEach(function (b) { b.onclick = function () { showTab(b.dataset.tab); }; });
+  var curCat = Object.keys(STAFF)[0];
+  function gi() { return S.guest === 'ru' ? 1 : 2; }
+  function renderStaff() {
+    var cats = $('cats'); cats.innerHTML = '';
+    Object.keys(STAFF).forEach(function (name) {
+      var b = document.createElement('button'); b.textContent = name; b.setAttribute('aria-pressed', name === curCat);
+      b.onclick = function () { curCat = name; renderStaff(); };
+      cats.appendChild(b);
+    });
+    var list = $('staffList'); list.innerHTML = '';
+    STAFF[curCat].forEach(function (p) {
+      var b = document.createElement('button'); b.className = 'phrase';
+      b.innerHTML = '<span class="a"></span><span class="b"></span>';
+      b.firstChild.textContent = p[0]; b.lastChild.textContent = p[gi()]; b.lastChild.lang = S.guest;
+      b.onclick = function () { addMsg(p[0], 'vi', S.guest, true).fill({ text: p[gi()], book: true }); };
+      list.appendChild(b);
+    });
+  }
+  function renderGuest() {
+    $('guestHint').textContent = UI[S.guest].hint;
+    var list = $('guestList'); list.innerHTML = '';
+    GUEST.forEach(function (p) {
+      var g = S.guest === 'ru' ? p[0] : p[1];
+      var b = document.createElement('button'); b.className = 'phrase g';
+      b.innerHTML = '<span class="a"></span><span class="b"></span>';
+      b.firstChild.textContent = g; b.firstChild.lang = S.guest; b.lastChild.textContent = p[2];
+      b.onclick = function () { addMsg(g, S.guest, 'vi', true).fill({ text: p[2], book: true }); };
+      list.appendChild(b);
+    });
+  }
+  function applyGuest() {
+    document.querySelectorAll('#guestSeg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.g === S.guest); });
+    $('micGuest').innerHTML = '🎤 ' + L[S.guest].flag + ' ' + UI[S.guest].mic + '<small>' + UI[S.guest].sub + '</small>';
+    $('dir').innerHTML = '<option value="vi">VI→' + S.guest.toUpperCase() + '</option><option value="g">' + S.guest.toUpperCase() + '→VI</option>';
+    renderStaff(); renderGuest();
+  }
+  document.querySelectorAll('#guestSeg button').forEach(function (b) {
+    b.onclick = function () { stopAll(); S.guest = b.dataset.g; save(); applyGuest(); };
+  });
+  function applyMode() {
+    document.querySelectorAll('#modeSeg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.m === S.mode); });
+    setHint();
+  }
+  document.querySelectorAll('#modeSeg button').forEach(function (b) {
+    b.onclick = function () { stopAll(); S.mode = b.dataset.m; save(); applyMode(); setLive(''); };
+  });
+
+  // ---------- Báo giá ----------
+  $('priceBtn').onclick = function () {
+    var n = parseInt(($('priceIn').value || '').replace(/\D/g, ''), 10);
+    if (!n) { $('priceIn').focus(); return; }
+    var f = n.toLocaleString(S.guest === 'ru' ? 'ru-RU' : 'en-US').replace(/ | /g, ' ');
+    addMsg('Tổng cộng: ' + n.toLocaleString('vi-VN') + ' đồng', 'vi', S.guest, true).fill({ text: UI[S.guest].currency(f), book: true });
+    $('priceIn').value = '';
+  };
+
+  // ---------- Phóng to ----------
+  var cur = null;
+  function openShow(text, orig, lang) {
+    cur = { text: text, lang: lang };
+    $('showBig').textContent = text; $('showBig').lang = lang; $('showOrig').textContent = orig;
+    $('show').classList.remove('flip'); $('show').hidden = false;
+  }
+  $('showClose').onclick = function () { $('show').hidden = true; };
+  $('showFlip').onclick = function () { $('show').classList.toggle('flip'); };
+  $('showSpeak').onclick = function () { if (cur) speak(cur.text, cur.lang, true); };
+
+  // ---------- Cài đặt ----------
+  function fillVoices() {
+    [['vVi', 'vi'], ['vRu', 'ru'], ['vEn', 'en']].forEach(function (p) {
+      var sel = $(p[0]), vs = voicesFor(p[1]), chosen = voiceFor(p[1]);
+      sel.innerHTML = '<option value="' + GVOICE + '">🌐 Giọng Google (qua mạng)</option>';
+      vs.forEach(function (v) {
+        var o = document.createElement('option'); o.value = v.voiceURI; o.textContent = (GOOD.test(v.name) ? '★ ' : '') + v.name;
+        if (chosen && chosen !== GVOICE && v.voiceURI === chosen.voiceURI) o.selected = true;
+        sel.appendChild(o);
+      });
+      if (chosen === GVOICE) sel.value = GVOICE;
+      sel.onchange = function () { S.voice[p[1]] = sel.value; save(); speak(L[p[1]].test, p[1], true); };
+    });
+  }
+  if (synth) { synth.getVoices(); synth.onvoiceschanged = fillVoices; }
+  $('setBtn').onclick = function () {
+    $('oSpeak').checked = S.speak; $('oBack').checked = S.back; $('oRate').value = S.rate;
+    fillVoices(); $('sheet').hidden = false;
+  };
+  $('oSpeak').onchange = function () { S.speak = this.checked; save(); if (!S.speak) stopSpeech(); };
+  $('oBack').onchange = function () { S.back = this.checked; save(); };
+  $('oRate').onchange = function () { S.rate = parseFloat(this.value); save(); };
+  document.querySelectorAll('[data-test]').forEach(function (b) { b.onclick = function () { speak(L[b.dataset.test].test, b.dataset.test, true); }; });
+  $('sheetClose').onclick = function () { $('sheet').hidden = true; };
+  $('sheet').onclick = function (e) { if (e.target === this) this.hidden = true; };
+  $('clearBtn').onclick = function () { stopAll(); log.innerHTML = ''; $('empty').hidden = false; setLive(''); stopSpeech(); };
+
+  applyGuest(); applyMode();
+})();
+</script>
+</body>
+</html>
