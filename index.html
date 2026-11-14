@@ -677,10 +677,16 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     setLive('⚠️ ' + micHelp(code) + ' (mã: ' + code + ') — Từ giờ máy này nói bằng 🎤 trên bàn phím: bấm nút, bàn phím hiện lên, bấm 🎤 rồi nói, nói xong tự dịch. (Sửa cài đặt xong thì vào ⚙️ bật lại “Bấm mic là nghe ngay”.)');
     kbMode(lang);
   }
-  var KB_PH = { vi: 'Bấm 🎤 trên bàn phím rồi nói tiếng Việt…', ru: 'Нажмите 🎤 на клавиатуре и говорите…', en: 'Tap 🎤 on the keyboard and speak…' };
+  var KB_PH = { vi: /Android/i.test(navigator.userAgent) ? 'Bấm 🎤 trên bàn phím (Samsung: 🎤 ở thanh trên bàn phím) rồi nói…' : 'Bấm 🎤 trên bàn phím rồi nói tiếng Việt…', ru: 'Нажмите 🎤 на клавиатуре и говорите…', en: 'Tap 🎤 on the keyboard and speak…' };
   // Mặc định: nói bằng mic của điện thoại (🎤 trên bàn phím). Máy nào cũng có, ổn định hơn mic trình duyệt.
   // Mặc định: bấm mic là app nghe ngay. Máy nào mic app lỗi → tự chuyển sang 🎤 bàn phím và nhớ cho máy đó.
-  function useKb() { return S.micMode === 'kb' || S.kbFail || kbFallback || !SR; }
+  // Android (Samsung…): mic trình duyệt lúc được lúc không → mặc định dùng 🎤 bàn phím. iPhone: mic app.
+  function useKb() {
+    if (kbFallback || !SR) return true;
+    if (S.micMode === 'kb') return true;
+    if (S.micMode === 'app') return !!S.kbFail;
+    return /Android/i.test(UA) || !!S.kbFail;
+  }
   function kbMode(lang) {
     clearMics();
     $('dir').value = lang === 'vi' ? 'vi>' + S.guest : lang + '>vi';
