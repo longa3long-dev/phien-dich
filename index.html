@@ -371,12 +371,26 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   }
   // Giọng Google qua mạng: dùng khi máy không có sẵn giọng Nga/Việt/Anh
   var audio = new Audio(); audio.preload = 'auto';
-  var SILENT = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+xDEAAPAAAGkAAAAIAAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxDwDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
-  var unlocked = false;
-  document.addEventListener('pointerdown', function () {
-    if (unlocked) return; unlocked = true;
-    try { audio.src = SILENT; audio.play().catch(function () {}); } catch (e) {}
-  }, true);
+  // iPhone/Android chỉ cho phát tiếng nếu âm thanh được "mở khoá" ngay lúc bấm.
+  // Mỗi lần bấm: phát 1 đoạn im lặng + 1 câu đọc rỗng để lần đọc bản dịch sau đó không bị chặn.
+  function silentWav() {
+    var n = 800, b = new ArrayBuffer(44 + n), v = new DataView(b);
+    function w(o, s) { for (var i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); }
+    w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true);
+    v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+    for (var i = 0; i < n; i++) v.setUint8(44 + i, 128);
+    return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+  }
+  var SILENT = silentWav();
+  function primeAudio() {
+    if (speaking) return;
+    try { audio.src = SILENT; var p = audio.play(); if (p) p.catch(function () {}); } catch (e) {}
+    if (synth) { try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {} }
+  }
+  document.addEventListener('pointerdown', primeAudio, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Enter') primeAudio(); }, true);
+  function blocked() { setLive('🔇 Máy chưa phát được tiếng — bấm 🔊 Đọc lại, và kiểm tra nút gạt im lặng / âm lượng.'); }
   function chunks(text) {
     var parts = text.match(/[^.!?。,;:\n]+[.!?。,;:\n]*/g) || [text], out = [], cur = '';
     parts.forEach(function (p) {
@@ -392,10 +406,11 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       function next() {
         if (i >= list.length) return resolve();
         audio.onended = function () { next(); };
-        audio.onerror = function () { resolve(); };
+        audio.onerror = function () { resolve(false); };
         audio.src = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + lang + '&q=' + encodeURIComponent(list[i++].trim());
         audio.playbackRate = S.rate;
-        audio.play().catch(function () { resolve(); });
+        var p = audio.play();
+        if (p) p.catch(function (e) { if (e && e.name === 'NotAllowedError') blocked(); resolve(false); });
       }
       next();
     });
@@ -410,15 +425,20 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       return Promise.race([speakGoogle(text, lang), new Promise(function (r) { setTimeout(r, 4000 + text.length * 150); })]).then(function () { speaking = false; });
     }
     return new Promise(function (resolve) {
-      var done = false;
+      var done = false, started = false;
       function fin() { if (!done) { done = true; speaking = false; resolve(); } }
+      function fallback() { if (done || started) return; synth.cancel(); speakGoogle(text, lang).then(fin); }
       var u = new SpeechSynthesisUtterance(text);
       u.lang = L[lang].speech; u.rate = S.rate;
       var v = voiceFor(lang); if (v) u.voice = v;
-      u.onend = fin; u.onerror = fin;
+      u.onstart = function () { started = true; };
+      u.onend = function () { if (started) fin(); else fallback(); };
+      u.onerror = function () { if (started) fin(); else fallback(); };
       speaking = true;
       synth.speak(u);
-      setTimeout(fin, 3000 + text.length * 140);
+      // Giọng của máy không chịu đọc (bị chặn / thiếu giọng) → chuyển sang giọng Google
+      setTimeout(fallback, 1500);
+      setTimeout(fin, 6000 + text.length * 150);
     });
   }
 
