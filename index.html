@@ -88,6 +88,9 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
 .mic small { font-weight: 500; font-size: .74rem; opacity: .8; }
 .mic.staff { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1310; }
 .mic.guest { background: linear-gradient(180deg, var(--g-1), var(--g-2)); color: #0b1430; }
+.mic.guest.en { background: linear-gradient(180deg, #8fe0bd, #2fa57a); color: #062a1c; }
+.mic.wide { grid-column: 1 / -1; padding: 12px 8px; }
+.msg .alt { font-size: .92rem; color: #d9d2c8; margin-top: 4px; }
 .mic.on { animation: pulse 1.1s infinite; }
 .mic.turn { outline: 3px solid #fff; outline-offset: 2px; }
 @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,.45); } 50% { box-shadow: 0 0 0 10px rgba(255,255,255,0); } }
@@ -142,8 +145,9 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       <div id="log"></div>
       <div class="empty" id="empty">
         <ol>
-          <li><b>Nhấn để nói:</b> bấm nút vàng rồi nói tiếng Việt, ngừng nói là máy tự dịch và đọc to cho khách. Muốn chắc ăn thì <b>giữ nút</b> trong lúc nói, nói xong thả tay ra.</li>
-          <li>Khách bấm <b>nút xanh</b> và nói tiếng của họ, máy dịch ra tiếng Việt.</li>
+          <li><b>Nhân viên:</b> bấm nút vàng rồi nói tiếng Việt. Ngừng nói là máy tự dịch và đọc to bằng tiếng của khách. Bấm nút lần nữa để chốt câu sớm.</li>
+          <li><b>Khách Nga</b> bấm nút xanh dương, <b>khách nói tiếng Anh</b> bấm nút xanh lá. Máy dịch ra tiếng Việt và đọc to cho anh nghe.</li>
+          <li>Khách vừa nói tiếng nào thì câu nhân viên nói tiếp theo tự dịch sang tiếng đó.</li>
           <li><b>Tự động:</b> máy tự nghe lần lượt, nhân viên nói xong thì tới lượt khách, rồi quay lại nhân viên. Không cần bấm nữa.</li>
           <li>Dòng <b>↩ Máy hiểu là</b> dịch ngược lại để anh kiểm tra máy dịch có đúng ý không.</li>
           <li>Bấm <b>⛶ Phóng to</b> để khách đọc chữ to.</li>
@@ -170,13 +174,14 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     <div class="live" id="live" data-hint="" aria-live="polite"></div>
     <div class="modes">
       <div class="seg" id="modeSeg" role="group" aria-label="Chế độ nghe">
-        <button data-m="ptt" aria-pressed="true">👆 Nhấn để nói</button>
+        <button data-m="ptt" aria-pressed="true">👆 Bấm để nói</button>
         <button data-m="auto" aria-pressed="false">🔁 Tự động</button>
       </div>
     </div>
     <div class="mics">
-      <button class="mic staff" id="micStaff">🎤 🇻🇳 Nhân viên<small>Nói tiếng Việt</small></button>
-      <button class="mic guest" id="micGuest"></button>
+      <button class="mic staff wide" id="micStaff">🎤 🇻🇳 Nhân viên nói<small id="staffSub">Nói tiếng Việt → tự dịch và đọc tiếng Nga</small></button>
+      <button class="mic guest" id="micRu" lang="ru">🎤 🇷🇺 Гость<small>Говорите по-русски</small></button>
+      <button class="mic guest en" id="micEn" lang="en">🎤 🇬🇧 Guest<small>Speak English</small></button>
     </div>
     <form class="type" id="typeForm">
       <select id="dir" aria-label="Chiều dịch"></select>
@@ -388,7 +393,13 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     try { audio.src = SILENT; var p = audio.play(); if (p) p.catch(function () {}); } catch (e) {}
     if (synth) { try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {} }
   }
-  document.addEventListener('pointerdown', primeAudio, true);
+  // Mở khoá trong sự kiện "click"/"touchend" (điện thoại không tính pointerdown là thao tác của người dùng)
+  var primed = 0, lastEnd = 0;
+  document.addEventListener('click', function (e) {
+    var onMicBtn = e.target.closest && e.target.closest('.mic');
+    if (!onMicBtn || primed < 2) { primed++; primeAudio(); }
+  }, true);
+  document.addEventListener('touchend', function () { if (primed < 1) { primed++; primeAudio(); } }, true);
   document.addEventListener('keydown', function (e) { if (e.key === 'Enter') primeAudio(); }, true);
   function blocked() { setLive('🔇 Máy chưa phát được tiếng — bấm 🔊 Đọc lại, và kiểm tra nút gạt im lặng / âm lượng.'); }
   function chunks(text) {
@@ -419,6 +430,9 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   function stopSpeech() { if (synth) synth.cancel(); try { audio.pause(); } catch (e) {} }
   function speak(text, lang, force) {
     if (!text || (!S.speak && !force)) return Promise.resolve();
+    // Vừa tắt mic xong: đợi máy chuyển từ chế độ thu âm sang phát loa
+    var wait = 450 - (Date.now() - lastEnd);
+    if (wait > 0) return new Promise(function (r) { setTimeout(r, wait); }).then(function () { return speak(text, lang, force); });
     stopSpeech();
     if (!synth || voiceFor(lang) === GVOICE) {
       speaking = true;
@@ -464,6 +478,15 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       var b1 = document.createElement('button'); b1.textContent = '🔊 Đọc lại'; b1.onclick = function () { speak(res.text, to, true); };
       var b2 = document.createElement('button'); b2.textContent = '⛶ Phóng to'; b2.onclick = function () { openShow(res.text, src, to); };
       t.append(b1, b2);
+      if (from === 'vi') {
+        // Hiện thêm bản dịch ngôn ngữ còn lại (Nga ↔ Anh) để khách nào cũng đọc được
+        var altLang = to === 'ru' ? 'en' : 'ru';
+        var al = document.createElement('div'); al.className = 'alt'; al.lang = altLang;
+        el.insertBefore(al, t);
+        var showAlt = function (x) { al.textContent = L[altLang].flag + ' ' + x; };
+        if (res.alt) showAlt(res.alt);
+        else smartTranslate(src, 'vi', altLang).then(function (x) { showAlt(x.text); }, function () { al.remove(); });
+      }
       if (from === 'vi' && S.back && !res.book) {
         var bk = document.createElement('div'); bk.className = 'back'; bk.textContent = '↩ Máy hiểu là: …';
         el.insertBefore(bk, t);
@@ -485,84 +508,116 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     return smartTranslate(text, from, to).then(m.fill, m.fail);
   }
 
-  // ---------- Nghe giọng nói (nhấn để nói / tự động ngắt câu) ----------
+  // ---------- Nghe giọng nói (bấm để nói / tự động, tự ngắt câu khi ngừng nói) ----------
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = null, recLang = null, autoOn = false, autoMiss = 0, holdTimer = null, pressAt = 0;
+  var UA = navigator.userAgent;
+  var isIOS = /iP(hone|ad|od)/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var inAppIOS = isIOS && /CriOS|FxiOS|EdgiOS|OPiOS|Zalo|FBAN|FBAV|Instagram|Line\//i.test(UA);
+  var rec = null, recLang = null, autoOn = false, autoMiss = 0;
   var live = $('live');
   function setLive(t) { live.textContent = t || ''; }
-  function setHint() { live.dataset.hint = SR ? (S.mode === 'auto' ? 'Bấm một nút mic để bắt đầu tự động — máy tự chuyển lượt' : 'Bấm để nói (ngừng nói là tự dịch) · hoặc giữ nút trong lúc nói') : 'Máy này chưa nghe được giọng nói — dùng 🎤 trên bàn phím để đọc vào ô chữ.'; }
+  function noMicMsg() {
+    return inAppIOS ? '⚠️ Trên iPhone mic chỉ chạy trong Safari — mở link bằng Safari (hoặc icon đã thêm vào màn hình chính).'
+      : '⚠️ Trình duyệt này chưa nghe được giọng nói — dùng Safari (iPhone) hoặc Chrome (Android, máy tính). Tạm thời gõ chữ hoặc dùng 🎤 trên bàn phím.';
+  }
+  function setHint() { live.dataset.hint = !SR ? noMicMsg() : S.mode === 'auto' ? 'Bấm 1 nút mic để bắt đầu — máy tự chuyển lượt nhân viên ↔ khách' : 'Bấm mic rồi nói — ngừng nói là tự dịch và đọc to'; }
+  function btnFor(lang) { return lang === 'vi' ? $('micStaff') : lang === 'ru' ? $('micRu') : $('micEn'); }
+  function clearMics() { ['micStaff', 'micRu', 'micEn'].forEach(function (id) { $(id).classList.remove('on', 'turn'); }); }
   function markTurn(lang) {
-    $('micStaff').classList.toggle('turn', autoOn && lang === 'vi');
-    $('micGuest').classList.toggle('turn', autoOn && lang !== 'vi');
+    ['micStaff', 'micRu', 'micEn'].forEach(function (id) { $(id).classList.remove('turn'); });
+    if (autoOn && lang) btnFor(lang).classList.add('turn');
   }
   function stopAll() {
-    autoOn = false; markTurn(null);
-    if (rec) { try { rec.abort(); } catch (e) {} }
-    rec = null; recLang = null;
-    $('micStaff').classList.remove('on'); $('micGuest').classList.remove('on');
+    autoOn = false;
+    var r = rec; rec = null; recLang = null;
+    if (r) { try { r.abort(); } catch (e) {} }
+    clearMics();
   }
-  function listen(lang) {
-    if (!SR) { setLive(''); $('dir').value = lang === 'vi' ? 'vi' : 'g'; $('typeIn').focus(); return; }
+  function setGuest(lang) {
+    if (lang === 'vi' || lang === S.guest) return;
+    S.guest = lang; save(); applyGuest();
+  }
+  var ERR = {
+    'audio-capture': '⚠️ Không mở được micro — có thể app khác (gọi điện, Zalo, ghi âm) đang dùng micro.',
+    'network': '⚠️ Mất mạng — máy cần mạng để nghe giọng nói.',
+    'language-not-supported': '⚠️ Máy này chưa hỗ trợ nghe ngôn ngữ này.',
+    'bad-grammar': ''
+  };
+  function listen(lang, fromTap, retried) {
+    if (!SR) { setLive(noMicMsg()); $('dir').value = lang === 'vi' ? 'vi>' + S.guest : lang + '>vi'; $('typeIn').focus(); return; }
+    setGuest(lang);
     stopSpeech();
+    if (rec) { var old = rec; rec = null; try { old.abort(); } catch (e) {} }
     var r = new SR(); rec = r; recLang = lang;
     r.lang = L[lang].speech; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
-    var btn = lang === 'vi' ? $('micStaff') : $('micGuest');
-    btn.classList.add('on'); markTurn(lang);
-    setLive(lang === 'vi' ? '🎙 Đang nghe tiếng Việt…' : '🎙 ' + UI[S.guest].listen);
-    r._text = '';
+    r._text = ''; r._err = null;
+    var btn = btnFor(lang), silTimer = null;
+    var guard = setTimeout(function () { if (rec === r) { try { r.stop(); } catch (e) {} } }, 20000);
+    clearMics(); btn.classList.add('on'); markTurn(lang);
+    setLive(lang === 'vi' ? '🎙 Đang nghe tiếng Việt…' : '🎙 ' + UI[lang].listen);
     r.onresult = function (e) {
       var fin = '', tmp = '';
       for (var i = 0; i < e.results.length; i++) { if (e.results[i].isFinal) fin += e.results[i][0].transcript; else tmp += e.results[i][0].transcript; }
-      r._text = (fin + ' ' + tmp).trim();
+      r._text = (fin + ' ' + tmp).replace(/\s+/g, ' ').trim();
       setLive('“' + r._text + '”');
+      // Ngừng nói ~1,6 giây là chốt câu (iPhone đôi khi không tự dừng)
+      clearTimeout(silTimer);
+      silTimer = setTimeout(function () { if (rec === r) { try { r.stop(); } catch (e) {} } }, 1600);
     };
     r.onerror = function (e) {
       r._err = e.error;
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { autoOn = false; setLive('⚠️ Chưa cho phép micro — bấm “Cho phép” micro rồi thử lại.'); }
-      else if (e.error === 'network') setLive('⚠️ Mất mạng — không nghe được.');
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        autoOn = false;
+        setLive(fromTap ? '⚠️ Micro đang bị chặn — vào Cài đặt của máy → Safari/Chrome → Micro → Cho phép, rồi mở lại app.' : '👆 Bấm mic để nói tiếp.');
+      } else if (ERR[e.error]) { autoOn = false; setLive(ERR[e.error]); }
     };
     r.onend = function () {
+      clearTimeout(guard); clearTimeout(silTimer);
       btn.classList.remove('on');
+      lastEnd = Date.now();
       if (rec !== r) return;
       rec = null; recLang = null;
       var said = r._text.trim();
       if (said) {
         autoMiss = 0; setLive('');
-        translateAndShow(said, lang).then(function () { if (autoOn) listen(other(lang)); });
-      } else if (autoOn && !r._err || autoOn && r._err === 'no-speech') {
+        translateAndShow(said, lang).then(function () { if (autoOn) listen(lang === 'vi' ? S.guest : 'vi', false); });
+      } else if (autoOn && (!r._err || r._err === 'no-speech')) {
         if (++autoMiss > 6) { stopAll(); setLive('Tạm dừng tự động vì lâu không ai nói. Bấm mic để tiếp tục.'); }
-        else listen(lang);
-      } else { markTurn(null); if (!r._err || r._err === 'no-speech' || r._err === 'aborted') setLive(r._err === 'no-speech' ? 'Không nghe thấy gì — bấm lại và nói to hơn nhé.' : ''); }
+        else listen(lang, false);
+      } else {
+        markTurn(null);
+        if (!r._err || r._err === 'no-speech') setLive('Không nghe thấy gì — bấm mic và nói lại, to và gần máy hơn nhé.');
+        else if (r._err === 'aborted') setLive('');
+      }
     };
-    try { r.start(); } catch (e) { btn.classList.remove('on'); rec = null; setLive('Không mở được micro.'); }
+    try { r.start(); }
+    catch (e) {
+      clearTimeout(guard); btn.classList.remove('on'); rec = null; recLang = null;
+      if (!retried) setTimeout(function () { listen(lang, fromTap, true); }, 350);
+      else setLive('⚠️ Không mở được micro — thử bấm lại.');
+    }
   }
-  function onPress(lang, ev) {
-    ev.preventDefault();
-    pressAt = Date.now();
+  function onMic(lang) {
     if (S.mode === 'auto') {
       if (autoOn && recLang === lang) { stopAll(); setLive('Đã dừng tự động.'); return; }
-      stopAll(); autoOn = true; autoMiss = 0; listen(lang); return;
+      stopAll(); autoOn = true; autoMiss = 0; listen(lang, true); return;
     }
-    if (rec) { var same = recLang === lang; try { rec.stop(); } catch (e) {} if (same) { pressAt = 0; return; } }
-    listen(lang);
+    // Đang nghe đúng nút này → bấm lần nữa là chốt câu và dịch luôn
+    if (rec && recLang === lang) { try { rec.stop(); } catch (e) {} return; }
+    listen(lang, true);
   }
-  function onRelease() {
-    // Giữ nút > 0,6 giây = nhấn-giữ để nói: thả tay là dừng nghe và dịch
-    if (S.mode === 'ptt' && rec && pressAt && Date.now() - pressAt > 600) { try { rec.stop(); } catch (e) {} }
-    pressAt = 0;
-  }
-  [['micStaff', 'vi'], ['micGuest', null]].forEach(function (p) {
+  [['micStaff', 'vi'], ['micRu', 'ru'], ['micEn', 'en']].forEach(function (p) {
     var b = $(p[0]);
-    b.addEventListener('pointerdown', function (e) { onPress(p[1] || S.guest, e); });
-    b.addEventListener('pointerup', onRelease);
-    b.addEventListener('pointerleave', onRelease);
+    b.addEventListener('click', function () { onMic(p[1]); });
     b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   });
 
   $('typeForm').onsubmit = function (e) {
     e.preventDefault();
     var v = $('typeIn').value; $('typeIn').value = '';
-    translateAndShow(v, $('dir').value === 'vi' ? 'vi' : S.guest);
+    var d = $('dir').value.split('>');
+    if (d[0] === 'vi') setGuest(d[1]);
+    translateAndShow(v, d[0]);
   };
 
   // ---------- Tabs, câu mẫu ----------
@@ -585,7 +640,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       var b = document.createElement('button'); b.className = 'phrase';
       b.innerHTML = '<span class="a"></span><span class="b"></span>';
       b.firstChild.textContent = p[0]; b.lastChild.textContent = p[gi()]; b.lastChild.lang = S.guest;
-      b.onclick = function () { addMsg(p[0], 'vi', S.guest, true).fill({ text: p[gi()], book: true }); };
+      b.onclick = function () { addMsg(p[0], 'vi', S.guest, true).fill({ text: p[gi()], book: true, alt: p[gi() === 1 ? 2 : 1] }); };
       list.appendChild(b);
     });
   }
@@ -603,8 +658,10 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   }
   function applyGuest() {
     document.querySelectorAll('#guestSeg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.g === S.guest); });
-    $('micGuest').innerHTML = '🎤 ' + L[S.guest].flag + ' ' + UI[S.guest].mic + '<small>' + UI[S.guest].sub + '</small>';
-    $('dir').innerHTML = '<option value="vi">VI→' + S.guest.toUpperCase() + '</option><option value="g">' + S.guest.toUpperCase() + '→VI</option>';
+    $('staffSub').textContent = 'Nói tiếng Việt → tự dịch và đọc tiếng ' + (S.guest === 'ru' ? 'Nga' : 'Anh');
+    var dv = $('dir').value;
+    $('dir').innerHTML = '<option value="vi>ru">VI→RU</option><option value="vi>en">VI→EN</option><option value="ru>vi">RU→VI</option><option value="en>vi">EN→VI</option>';
+    $('dir').value = dv && dv.indexOf('vi>') !== 0 ? dv : 'vi>' + S.guest;
     renderStaff(); renderGuest();
   }
   document.querySelectorAll('#guestSeg button').forEach(function (b) {
