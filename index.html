@@ -97,6 +97,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
 .type { display: flex; gap: 8px; margin-top: 10px; }
 .type select, .type input { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
 .type select { padding: 0 4px; font-size: .9rem; }
+.modes[hidden] { display: none; }
 .type input.kb { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,164,106,.35); }
 .type input { flex: 1; min-width: 0; padding: 10px 12px; }
 .type button { border-radius: 12px; padding: 0 14px; background: var(--card-2); border: 1px solid var(--gold); color: var(--gold-soft); font-weight: 700; }
@@ -162,10 +163,10 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       <div id="log"></div>
       <div class="empty" id="empty">
         <ol>
-          <li><b>Nhân viên:</b> bấm nút vàng rồi nói tiếng Việt. Ngừng nói là máy tự dịch và đọc to bằng tiếng của khách. Bấm nút lần nữa để chốt câu sớm.</li>
-          <li><b>Khách Nga</b> bấm nút xanh dương, <b>khách nói tiếng Anh</b> bấm nút xanh lá. Máy dịch ra tiếng Việt và đọc to cho anh nghe.</li>
-          <li>Khách vừa nói tiếng nào thì câu nhân viên nói tiếp theo tự dịch sang tiếng đó.</li>
-          <li><b>Tự động:</b> máy tự nghe lần lượt, nhân viên nói xong thì tới lượt khách, rồi quay lại nhân viên. Không cần bấm nữa.</li>
+          <li><b>Nhân viên:</b> bấm nút vàng → bàn phím hiện lên → bấm <b>🎤 trên bàn phím</b> rồi nói tiếng Việt. Ngừng nói khoảng 2 giây là máy tự dịch và đọc to cho khách.</li>
+          <li><b>Khách Nga</b> bấm nút xanh dương, <b>khách nói tiếng Anh</b> bấm nút xanh lá, rồi bấm 🎤 trên bàn phím và nói. Máy dịch ra tiếng Việt và đọc to.</li>
+          <li>Máy tự nhận ra câu là tiếng Việt, Nga hay Anh. Khách vừa nói tiếng nào thì câu nhân viên nói tiếp theo dịch sang tiếng đó.</li>
+          <li><b>iPhone:</b> 🎤 nghe theo ngôn ngữ của bàn phím — muốn nói tiếng Anh/Nga thì bấm 🌐 trên bàn phím để đổi sang bàn phím English/Русский trước khi bấm 🎤.</li>
           <li>Dòng <b>↩ Máy hiểu là</b> dịch ngược lại để anh kiểm tra máy dịch có đúng ý không.</li>
           <li>Bấm <b>⛶ Phóng to</b> để khách đọc chữ to.</li>
         </ol>
@@ -212,6 +213,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   <div class="box" role="dialog" aria-label="Cài đặt">
     <h2>Cài đặt</h2>
     <div class="opt"><label for="oSpeak">Tự đọc to bản dịch</label><input type="checkbox" id="oSpeak"></div>
+    <div class="opt"><label for="oAppMic">Dùng mic của app (thử nghiệm)<small>Tắt = nói bằng 🎤 trên bàn phím điện thoại (khuyên dùng, máy nào cũng chạy). Bật = bấm là nghe ngay, có chế độ Tự động, nhưng một số máy không chạy.</small></label><input type="checkbox" id="oAppMic"></div>
     <div class="opt"><label for="oBack">Dịch ngược để kiểm tra<small>Hiện dòng “Máy hiểu là…” dưới câu nhân viên nói</small></label><input type="checkbox" id="oBack"></div>
     <div class="opt"><label for="oRate">Tốc độ đọc</label><input type="range" id="oRate" min="0.6" max="1.3" step="0.05"></div>
     <div class="opt"><label for="vVi">Giọng tiếng Việt</label><select id="vVi" data-lang="vi"></select><button class="test" data-test="vi">Thử</button></div>
@@ -235,7 +237,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     <ol id="gateSteps"></ol>
     <button class="close" id="gateOpen" hidden>Mở bằng Chrome</button>
     <button class="ghost" id="gateCopy">📋 Sao chép link</button>
-    <button class="ghost" id="gateSkip">Vẫn dùng ở đây (chỉ gõ chữ)</button>
+    <button class="ghost" id="gateSkip">Vẫn dùng ở đây (nói bằng 🎤 bàn phím)</button>
   </div>
 </div>
 
@@ -673,13 +675,25 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     kbMode(lang);
   }
   var KB_PH = { vi: 'Bấm 🎤 trên bàn phím rồi nói tiếng Việt…', ru: 'Нажмите 🎤 на клавиатуре и говорите…', en: 'Tap 🎤 on the keyboard and speak…' };
+  // Mặc định: nói bằng mic của điện thoại (🎤 trên bàn phím). Máy nào cũng có, ổn định hơn mic trình duyệt.
+  function useKb() { return S.micMode !== 'app' || kbFallback || !SR; }
   function kbMode(lang) {
     clearMics();
     $('dir').value = lang === 'vi' ? 'vi>' + S.guest : lang + '>vi';
     if (lang !== 'vi') setGuest(lang);
     kbVoice = true;
-    var i = $('typeIn'); i.placeholder = KB_PH[lang]; i.classList.add('kb'); i.focus();
+    btnFor(lang).classList.add('on');
+    var i = $('typeIn'); i.placeholder = KB_PH[lang]; i.lang = lang; i.classList.add('kb'); i.focus();
   }
+  // Nhận ra tiếng của câu: chữ Nga → Nga; có dấu tiếng Việt → Việt; còn lại → Anh
+  var VI_CH = /[ăâđêôơưạảãáàặẳẵắằậẩẫấầẹẻẽéèệểễếềịỉĩíìọỏõóòộổỗốồợởỡớờụủũúùựửữứừỵỷỹýỳ]/i;
+  function detectLang(t) {
+    if (/[Ѐ-ӿ]/.test(t)) return 'ru';
+    if (VI_CH.test(t)) return 'vi';
+    if (/[a-z]/i.test(t)) return /\b(the|you|is|are|can|do|i|my|what|how|please|thank|want|it)\b/i.test(t) ? 'en' : null;
+    return null;
+  }
+  $('typeIn').addEventListener('focus', function () { if (useKb()) { kbVoice = true; this.classList.add('kb'); } });
   // Đang nói qua bàn phím: ngừng ~1,8 giây là tự dịch và đọc
   $('typeIn').addEventListener('input', function () {
     if (!kbVoice) return;
@@ -689,11 +703,11 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   });
   $('typeIn').addEventListener('blur', function () {
     var i = this;
-    setTimeout(function () { if (document.activeElement !== i) { kbVoice = false; i.placeholder = 'Hoặc gõ chữ để dịch…'; i.classList.remove('kb'); } }, 300);
+    setTimeout(function () { if (document.activeElement !== i) { kbVoice = false; i.placeholder = useKb() ? 'Bấm vào đây → 🎤 trên bàn phím để nói' : 'Hoặc gõ chữ để dịch…'; i.classList.remove('kb'); clearMics(); } }, 300);
   });
   function onMic(lang) {
-    // Máy này không dùng được mic trình duyệt → chuyển thẳng sang mic bàn phím (mở bàn phím ngay khi bấm)
-    if (kbFallback || !SR) { kbMode(lang); setLive(KB_PH[lang]); return; }
+    // Mic điện thoại (mặc định) → mở bàn phím ngay khi bấm, người nói bấm 🎤 trên bàn phím
+    if (useKb()) { kbMode(lang); setLive(KB_PH[lang]); return; }
     if (S.mode === 'auto') {
       if (autoOn && recLang === lang) { stopAll(); setLive('Đã dừng tự động.'); return; }
       stopAll(); autoOn = true; autoMiss = 0; listen(lang, true); return;
@@ -711,9 +725,16 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   $('typeForm').onsubmit = function (e) {
     e.preventDefault();
     var v = $('typeIn').value; $('typeIn').value = '';
+    if (!v.trim()) return;
     var d = $('dir').value.split('>');
-    if (d[0] === 'vi') setGuest(d[1]);
-    translateAndShow(v, d[0]);
+    // Bàn phím đang để tiếng khác nút đã bấm → theo tiếng thật của câu
+    var real = detectLang(v), from = real || d[0];
+    if (from === 'vi') { if (d[0] === 'vi') setGuest(d[1]); }
+    else setGuest(from);
+    $('dir').value = from === 'vi' ? 'vi>' + S.guest : from + '>vi';
+    // Nói bằng bàn phím: đóng bàn phím (tắt 🎤) trước khi đọc bản dịch, để 🎤 không thu lại tiếng loa
+    if (kbVoice) { $('typeIn').blur(); lastEnd = Date.now(); setLive(''); }
+    translateAndShow(v, from);
   };
 
   // ---------- Tabs, câu mẫu ----------
@@ -765,7 +786,12 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   });
   function applyMode() {
     document.querySelectorAll('#modeSeg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.m === S.mode); });
+    var kb = useKb();
+    document.querySelector('.modes').hidden = kb; // chế độ tự động chỉ có khi dùng mic của app
+    $('staffSub').hidden = false;
+    $('typeIn').placeholder = kb ? 'Bấm vào đây → 🎤 trên bàn phím để nói' : 'Hoặc gõ chữ để dịch…';
     setHint();
+    if (kb) live.dataset.hint = 'Bấm nút → bấm 🎤 trên bàn phím → nói. Ngừng nói là tự dịch và đọc to.';
   }
   document.querySelectorAll('#modeSeg button').forEach(function (b) {
     b.onclick = function () { stopAll(); S.mode = b.dataset.m; save(); applyMode(); setLive(''); };
@@ -838,7 +864,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     var target = isIOS ? 'Safari' : 'Chrome';
     $('gateBrowser').textContent = target;
     $('gateWhy').textContent = inAppName
-      ? 'Anh/chị đang mở link trong ' + inAppName + '. Trình duyệt trong ' + inAppName + ' chặn micro và loa nên không nói, không nghe được.'
+      ? 'Anh/chị đang mở link trong ' + inAppName + '. Trình duyệt trong ' + inAppName + ' hay chặn loa nên không nghe được tiếng dịch.'
       : 'Trình duyệt này (' + browserName() + ') không hỗ trợ nghe giọng nói.';
     var steps = [];
     if (inAppName && isIOS) {
@@ -867,7 +893,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     else prompt('Sao chép link này:', url);
   };
   $('gateSkip').onclick = function () { $('gate').hidden = true; };
-  if (inAppName || !SR) showGate();
+  if (inAppName) showGate();
   else if (isIOS || isAndroid) {
     // Điện thoại: 1 lần chạm lúc mở app để mở khoá loa (không đụng tới mic)
     var st = document.createElement('div');
@@ -882,14 +908,17 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     var c = function (l) { return voicesFor(l).length; };
     $('diagText').innerHTML = '';
     [['Trình duyệt', browserName()],
-     ['Nghe giọng nói (mic)', SR && !inAppName ? '✅ Có' : '❌ Không — mở bằng ' + (isIOS ? 'Safari' : 'Chrome')],
+     ['Cách nói', useKb() ? '🎤 Mic bàn phím điện thoại' : '🎤 Mic của app'],
+     ['Mic của app', SR && !inAppName ? '✅ Máy có hỗ trợ' : '❌ Không hỗ trợ (dùng 🎤 bàn phím)'],
      ['Giọng đọc có sẵn', 'Việt ' + c('vi') + ' · Nga ' + c('ru') + ' · Anh ' + c('en') + (c('vi') && c('ru') ? '' : ' (thiếu thì tự dùng giọng Google qua mạng)')],
      ['Mạng', navigator.onLine ? '✅ Có mạng' : '❌ Mất mạng']
     ].forEach(function (r) { var d = document.createElement('div'); d.textContent = r[0] + ': ' + r[1]; $('diagText').appendChild(d); });
   }
   $('setBtn').addEventListener('click', fillDiag);
   $('diagSpk').onclick = function () { speak('Xin chào, loa đang hoạt động tốt.', 'vi', true); };
-  $('diagMic').onclick = function () { kbFallback = false; $('sheet').hidden = true; showTab('chat'); onMic('vi'); };
+  $('diagMic').onclick = function () { kbFallback = false; $('sheet').hidden = true; showTab('chat'); listen('vi', true); };
+  $('oAppMic').onchange = function () { S.micMode = this.checked ? 'app' : 'kb'; kbFallback = false; save(); stopAll(); applyMode(); };
+  $('setBtn').addEventListener('click', function () { $('oAppMic').checked = S.micMode === 'app'; });
 
   applyGuest(); applyMode();
 })();
