@@ -426,14 +426,14 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     try { audio.src = SILENT; var p = audio.play(); if (p) p.catch(function () {}); } catch (e) {}
     if (synth) { try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {} }
   }
-  // Mở khoá trong sự kiện "click"/"touchend" (điện thoại không tính pointerdown là thao tác của người dùng)
-  var primed = 0, lastEnd = 0;
-  document.addEventListener('click', function (e) {
-    var onMicBtn = e.target.closest && e.target.closest('.mic');
-    if (!onMicBtn || primed < 2) { primed++; primeAudio(); }
-  }, true);
-  document.addEventListener('touchend', function () { if (primed < 1) { primed++; primeAudio(); } }, true);
+  // Mở khoá loa khi bấm vào chỗ KHÁC nút mic (màn "Chạm để bắt đầu", tab, câu mẫu…).
+  // Tuyệt đối không phát âm thanh lúc bấm mic: iPhone sẽ không mở được micro.
+  var lastEnd = 0, lastAudio = 0;
+  function notMic(e) { return !(e.target && e.target.closest && e.target.closest('.mic, #diagMic')); }
+  document.addEventListener('click', function (e) { if (notMic(e)) primeAudio(); }, true);
   document.addEventListener('keydown', function (e) { if (e.key === 'Enter') primeAudio(); }, true);
+  // iPhone (iOS 17+): cho tiếng phát ra loa ngoài, không phát nhỏ ở loa thoại
+  function setSession(t) { try { if (navigator.audioSession) navigator.audioSession.type = t; } catch (e) {} }
   function blocked() { setLive('🔇 Máy chưa phát được tiếng — bấm 🔊 Đọc lại, và kiểm tra nút gạt im lặng / âm lượng.'); }
   function chunks(text) {
     var parts = text.match(/[^.!?。,;:\n]+[.!?。,;:\n]*/g) || [text], out = [], cur = '';
@@ -460,13 +460,21 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     });
   }
   var speaking = false;
-  function stopSpeech() { if (synth) synth.cancel(); try { audio.pause(); } catch (e) {} }
+  function stopSpeech() {
+    var was = speaking || (synth && synth.speaking) || (audio && !audio.paused);
+    if (synth) synth.cancel();
+    try { audio.pause(); } catch (e) {}
+    if (was) lastAudio = Date.now();
+    speaking = false;
+  }
   function speak(text, lang, force) {
     if (!text || (!S.speak && !force)) return Promise.resolve();
+    if (rec) return Promise.resolve(); // đang nghe mic thì không đọc chồng lên
     // Vừa tắt mic xong: đợi máy chuyển từ chế độ thu âm sang phát loa
-    var wait = 450 - (Date.now() - lastEnd);
+    var wait = 600 - (Date.now() - lastEnd);
     if (wait > 0) return new Promise(function (r) { setTimeout(r, wait); }).then(function () { return speak(text, lang, force); });
     stopSpeech();
+    setSession('playback');
     if (!synth || voiceFor(lang) === GVOICE) {
       speaking = true;
       return Promise.race([speakGoogle(text, lang), new Promise(function (r) { setTimeout(r, 4000 + text.length * 150); })]).then(function () { speaking = false; });
@@ -580,8 +588,16 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     if (!SR) { setLive(noMicMsg()); $('dir').value = lang === 'vi' ? 'vi>' + S.guest : lang + '>vi'; $('typeIn').focus(); return; }
     setGuest(lang);
     stopSpeech();
-    if (rec) { var old = rec; rec = null; try { old.abort(); } catch (e) {} }
-    var r = new SR(); rec = r; recLang = lang;
+    if (rec) { var old = rec; rec = null; try { old.abort(); } catch (e) {} lastAudio = Date.now(); }
+    // Loa vừa phát / mic cũ vừa tắt → đợi một chút cho máy nhả loa rồi mới mở mic
+    var gap = 350 - (Date.now() - Math.max(lastAudio, lastEnd));
+    if (gap > 0 && !listen._waiting) {
+      listen._waiting = true; btnFor(lang).classList.add('on'); setLive('🎙 …');
+      setTimeout(function () { listen._waiting = false; listen(lang, fromTap, retried); }, gap);
+      return;
+    }
+    setSession('auto');
+    var r = new SR(); rec = r; recLang = lang; r._t0 = Date.now();
     r.lang = L[lang].speech; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
     r._text = ''; r._err = null;
     var btn = btnFor(lang), silTimer = null;
@@ -602,7 +618,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
         autoOn = false;
         setLive(fromTap ? '⚠️ Micro đang bị chặn — vào Cài đặt của máy → Safari/Chrome → Micro → Cho phép, rồi mở lại app.' : '👆 Bấm mic để nói tiếp.');
-      } else if (ERR[e.error]) { autoOn = false; setLive(ERR[e.error]); }
+      } else if (ERR[e.error]) { autoOn = false; setLive(ERR[e.error] + ' (mã: ' + e.error + ')'); }
     };
     r.onend = function () {
       clearTimeout(guard); clearTimeout(silTimer);
@@ -611,15 +627,19 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
       if (rec !== r) return;
       rec = null; recLang = null;
       var said = r._text.trim();
+      var quick = Date.now() - r._t0 < 1200;
       if (said) {
         autoMiss = 0; setLive('');
         translateAndShow(said, lang).then(function () { if (autoOn) listen(lang === 'vi' ? S.guest : 'vi', false); });
+      } else if (quick && !retried && (!r._err || r._err === 'audio-capture' || r._err === 'no-speech')) {
+        // Mic tắt ngay khi vừa mở (hay gặp trên iPhone) → tự mở lại 1 lần
+        setTimeout(function () { listen(lang, fromTap, true); }, 400);
       } else if (autoOn && (!r._err || r._err === 'no-speech')) {
         if (++autoMiss > 6) { stopAll(); setLive('Tạm dừng tự động vì lâu không ai nói. Bấm mic để tiếp tục.'); }
         else listen(lang, false);
       } else {
         markTurn(null);
-        if (!r._err || r._err === 'no-speech') setLive('Không nghe thấy gì — bấm mic và nói lại, to và gần máy hơn nhé.');
+        if (!r._err || r._err === 'no-speech') setLive('Không nghe thấy gì — bấm mic và nói lại, to và gần máy hơn nhé.' + (quick ? ' (mã: mic-tat-ngay)' : ''));
         else if (r._err === 'aborted') setLive('');
       }
     };
@@ -627,7 +647,7 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
     catch (e) {
       clearTimeout(guard); btn.classList.remove('on'); rec = null; recLang = null;
       if (!retried) setTimeout(function () { listen(lang, fromTap, true); }, 350);
-      else setLive('⚠️ Không mở được micro — thử bấm lại.');
+      else setLive('⚠️ Không mở được micro — thử bấm lại. (mã: ' + (e && e.name || 'start') + ')');
     }
   }
   function onMic(lang) {
@@ -805,6 +825,14 @@ main { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: tou
   };
   $('gateSkip').onclick = function () { $('gate').hidden = true; };
   if (inAppName || !SR) showGate();
+  else if (isIOS || isAndroid) {
+    // Điện thoại: 1 lần chạm lúc mở app để mở khoá loa (không đụng tới mic)
+    var st = document.createElement('div');
+    st.className = 'gate'; st.id = 'startGate';
+    st.innerHTML = '<div class="box"><div class="gate-ico">🎤🔊</div><h2>Chạm để bắt đầu phiên dịch</h2><p>Tap to start · Нажмите, чтобы начать</p><button class="close" type="button">Bắt đầu</button></div>';
+    st.addEventListener('click', function () { st.remove(); });
+    document.body.appendChild(st);
+  }
 
   // ---------- Kiểm tra máy (trong ⚙️) ----------
   function fillDiag() {
